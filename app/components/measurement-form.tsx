@@ -446,11 +446,11 @@ export default function MeasurementForm({
                 </div>
                 <div>
                   <p className="font-medium text-blue-900">Egg Density</p>
-                  <p className="text-lg text-blue-700">{calculation.eggDensity}</p>
+                  <p className="text-lg text-blue-700">{calculation.eggDensity.toFixed(3)} g/cm³</p>
                 </div>
                 <div>
                   <p className="font-medium text-blue-900">Egg Volume</p>
-                  <p className="text-lg text-blue-700">{calculation.eggVolume} mm³</p>
+                  <p className="text-lg text-blue-700">{calculation.eggVolume.toFixed(2)} cm³</p>
                 </div>
                 <div>
                   <p className="font-medium text-blue-900">Confidence</p>

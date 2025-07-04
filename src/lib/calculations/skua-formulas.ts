@@ -13,8 +13,8 @@ export interface SkuaCalculationInput {
 
 export interface SkuaCalculationResult {
   tbh: number // days until hatching
-  eggDensity: number // DE
-  eggVolume: number // VE
+  eggDensity: number // DE in g/cm³
+  eggVolume: number // VE in cm³
   confidence: number
   speciesType: 'arctic' | 'great'
   formula: {
@@ -51,17 +51,23 @@ const SPECIES_RANGES = {
 
 /**
  * Calculate egg volume using the formula: VE = KV × l × b²
+ * Returns volume in cm³ (converts from mm³ to cm³)
  */
 export function calculateEggVolume(length: number, breadth: number, kv: number): number {
   if (length <= 0 || breadth <= 0 || kv <= 0) {
     throw new Error("All measurements must be positive numbers")
   }
   
-  return kv * length * Math.pow(breadth, 2)
+  // Calculate volume in mm³ first
+  const volumeMm3 = kv * length * Math.pow(breadth, 2)
+  
+  // Convert mm³ to cm³ (1 cm³ = 1000 mm³)
+  return volumeMm3 / 1000
 }
 
 /**
  * Calculate egg density using the formula: DE = m / VE
+ * Returns density in g/cm³ (mass in grams, volume in cm³)
  */
 export function calculateEggDensity(mass: number, eggVolume: number): number {
   if (mass <= 0 || eggVolume <= 0) {
