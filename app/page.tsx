@@ -80,14 +80,21 @@ export default function HomePage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Ovotime</h1>
-              <p className="text-lg text-gray-600 mt-2">
-                Skua Egg Hatching Time Prediction Tool
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                Based on research from <em>Seabird 32-84</em> - Arctic and Great Skua studies in the Faroe Islands
-              </p>
+            <div className="flex items-center gap-4">
+              <img 
+                src="/logo.svg" 
+                alt="Ovotime Logo" 
+                className="w-12 h-12"
+              />
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Ovotime</h1>
+                <p className="text-lg text-gray-600 mt-2">
+                  Skua Egg Hatching Time Prediction Tool
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Based on research from <em>Seabird 32-84</em> - Arctic and Great Skua studies in the Faroe Islands
+                </p>
+              </div>
             </div>
             <Link
               href="/sessions"
