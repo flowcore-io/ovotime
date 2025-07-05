@@ -1,0 +1,37 @@
+# Flowcore Local Development Configuration
+# This is used for local development with the Flowcore CLI
+
+tenant: ovotime
+
+development:
+    proxyEndpoints:
+        ovotime-research:
+            dataCore: ovotime-research-data
+            flowType: measurements
+            events:
+                - measurement.submitted.v0
+                - measurement.validated.v0
+                - measurement.rejected.v0
+            endpoints:
+                - "" # POST /api/flowcore/transformer is the default
+
+        ovotime-predictions:
+            dataCore: ovotime-research-data
+            flowType: predictions
+            events:
+                - prediction.requested.v0
+                - prediction.calculated.v0
+                - prediction.failed.v0
+            endpoints:
+                - ""
+
+        ovotime-sessions:
+            dataCore: ovotime-research-data
+            flowType: sessions
+            events:
+                - session.started.v0
+                - session.measurement-added.v0
+                - session.completed.v0
+                - session.exported.v0
+            endpoints:
+                - "" 

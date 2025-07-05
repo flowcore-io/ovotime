@@ -1,7 +1,15 @@
 import { calculateSkuaTBH } from "@/src/lib/calculations/skua-formulas"
 import { generateId, sleep } from "@/src/lib/utils"
 import { validateEggMeasurement } from "@/src/lib/validation"
-import { pathways } from "@/src/pathways/pathways"
+import {
+    publishMeasurementRejected,
+    publishMeasurementSubmitted,
+    publishMeasurementValidated,
+    publishPredictionCalculated,
+    publishPredictionFailed,
+    publishPredictionRequested,
+    publishSessionMeasurementAdded
+} from "@/src/pathways/pathways"
 import { NextRequest, NextResponse } from "next/server"
 
 /**
@@ -12,10 +20,19 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const measurementId = body.measurementId || generateId()
+    const predictionId = generateId()
     
     // Validate measurement data
     const validationResult = validateEggMeasurement(body)
     if (!validationResult.isValid) {
+      // Publish measurement rejected event
+      await publishMeasurementRejected({
+        measurementId,
+        rejectionReason: "Validation failed",
+        validationErrors: validationResult.errors,
+        rejectedAt: new Date()
+      })
+
       return NextResponse.json({
         success: false,
         error: "Validation failed",
@@ -26,44 +43,112 @@ export async function POST(request: NextRequest) {
     // Extract measurement data
     const { measurements, speciesType, location, researcherNotes, sessionId } = body
     
-    // Calculate prediction
-    const predictionInput = {
-      length: measurements.length,
-      breadth: measurements.breadth,
-      mass: measurements.mass,
-      kv: measurements.kv,
-      speciesType
-    }
-
-    const prediction = calculateSkuaTBH(predictionInput)
-
-    // Create measurement event data
-    const measurementData = {
+    // Publish measurement submitted event
+    await publishMeasurementSubmitted({
       measurementId,
       sessionId,
       speciesType,
       measurements,
       location,
       researcherNotes,
-      prediction,
-      recordedAt: new Date()
+      timestamp: new Date()
+    })
+
+    // Publish measurement validated event
+    await publishMeasurementValidated({
+      measurementId,
+      validationStatus: 'valid',
+      normalizedData: measurements,
+      validatedAt: new Date()
+    })
+
+    // Add measurement to session if sessionId is provided
+    if (sessionId) {
+      await publishSessionMeasurementAdded({
+        sessionId,
+        measurementId,
+        sequenceNumber: 1, // This should be calculated from session
+        addedAt: new Date()
+      })
     }
 
-    // Publish measurement event
-    await pathways.write("measurement.recorded.0", measurementData)
-
-    // Brief delay for transformer processing
-    await sleep(100)
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        measurementId,
-        measurement: measurementData,
-        prediction
-      },
-      message: "Measurement processed successfully"
+    // Publish prediction requested event
+    await publishPredictionRequested({
+      predictionId,
+      measurementId,
+      sessionId,
+      calculationMethod: 'tbh_skuas',
+      requestedAt: new Date()
     })
+
+    try {
+      // Calculate prediction
+      const predictionInput = {
+        length: measurements.length,
+        breadth: measurements.breadth,
+        mass: measurements.mass,
+        kv: measurements.kv,
+        speciesType
+      }
+
+      const prediction = calculateSkuaTBH(predictionInput)
+
+      // Publish prediction calculated event
+      await publishPredictionCalculated({
+        predictionId,
+        measurementId,
+        results: {
+          tbh: prediction.tbh,
+          eggDensity: prediction.eggDensity,
+          eggVolume: prediction.eggVolume,
+          confidence: prediction.confidence,
+          speciesType: prediction.speciesType,
+          calculationTimestamp: new Date()
+        },
+        formula: {
+          name: prediction.formula.name,
+          version: prediction.formula.version,
+          coefficients: prediction.formula.coefficients
+        },
+        calculatedAt: new Date()
+      })
+
+      // Brief delay for event processing
+      await sleep(100)
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          measurementId,
+          predictionId,
+          measurements,
+          prediction
+        },
+        message: "Measurement processed successfully"
+      })
+
+    } catch (predictionError) {
+      console.error("Prediction calculation error:", predictionError)
+
+      // Publish prediction failed event
+      await publishPredictionFailed({
+        predictionId,
+        measurementId,
+        errorType: 'calculation_error',
+        errorMessage: predictionError instanceof Error ? predictionError.message : 'Unknown calculation error',
+        errorDetails: {
+          input: { measurements, speciesType },
+          error: predictionError
+        },
+        failedAt: new Date()
+      })
+
+      return NextResponse.json({
+        success: false,
+        error: "Prediction calculation failed",
+        message: predictionError instanceof Error ? predictionError.message : "Unknown error"
+      }, { status: 500 })
+    }
 
   } catch (error) {
     console.error("Measurement processing error:", error)
