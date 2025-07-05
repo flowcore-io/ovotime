@@ -70,7 +70,7 @@ function CalculationBreakdown({ prediction }: { prediction: SkuaCalculationResul
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-gray-600">Egg Volume (VE):</span>
-            <span className="font-mono">{formatNumber(prediction.eggVolume, 2)} mm³</span>
+            <span className="font-mono">{formatNumber(prediction.eggVolume, 2)} cm³</span>
           </div>
           
           <div className="flex justify-between">
@@ -142,7 +142,7 @@ function PredictionCard({ prediction }: { prediction: SkuaCalculationResult }) {
         <div className="bg-white rounded-lg p-3 text-center">
           <p className="text-xs text-gray-600 mb-1">Egg Volume</p>
           <p className="text-lg font-semibold text-gray-900">
-            {formatNumber(prediction.eggVolume, 1)} mm³
+            {formatNumber(prediction.eggVolume, 1)} cm³
           </p>
         </div>
       </div>

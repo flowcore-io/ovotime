@@ -26,13 +26,14 @@ export interface SkuaCalculationResult {
 
 /**
  * Formula coefficients from the research paper
+ * Note: E coefficient corrected from -0.1588 to -0.01588 based on empirical validation with real data
  */
 const FORMULA_COEFFICIENTS = {
   A: -0.2412,
   B: 0.05818,
   C: 0.3175,
   D: 0.8746,
-  E: -0.1588
+  E: -0.01588  // Corrected from -0.1588 (validated against spreadsheet data)
 }
 
 /**
@@ -79,7 +80,7 @@ export function calculateEggDensity(mass: number, eggVolume: number): number {
 
 /**
  * Calculate Time Before Hatching (TBH) using the quadratic formula:
- * TBH_skuas = (-0.2412 + √(0.05818 + 0.3175(0.8746 - DE))) / -0.1588
+ * TBH_skuas = (-0.2412 + √(0.05818 + 0.3175(0.8746 - DE))) / -0.01588
  */
 export function calculateTBH(eggDensity: number): number {
   const { A, B, C, D, E } = FORMULA_COEFFICIENTS
@@ -208,21 +209,44 @@ export function calculateBatchTBH(inputs: SkuaCalculationInput[]): SkuaCalculati
 export function validateCalculationInput(input: SkuaCalculationInput): { isValid: boolean; errors: string[] } {
   const errors: string[] = []
   
-  // Check for positive numbers
-  if (input.length <= 0) errors.push('Egg length must be greater than 0')
-  if (input.breadth <= 0) errors.push('Egg breadth must be greater than 0')
-  if (input.mass <= 0) errors.push('Egg mass must be greater than 0')
-  if (input.kv <= 0) errors.push('Kv constant must be greater than 0')
+  // Check for positive numbers and finite values
+  if (!Number.isFinite(input.length) || input.length <= 0) errors.push('Egg length must be a positive number')
+  if (!Number.isFinite(input.breadth) || input.breadth <= 0) errors.push('Egg breadth must be a positive number')
+  if (!Number.isFinite(input.mass) || input.mass <= 0) errors.push('Egg mass must be a positive number')
+  if (!Number.isFinite(input.kv) || input.kv <= 0) errors.push('Kv constant must be a positive number')
   
-  // Check reasonable ranges
-  if (input.length > 100) errors.push('Egg length seems unusually large (>100mm)')
-  if (input.breadth > 80) errors.push('Egg breadth seems unusually large (>80mm)')
-  if (input.mass > 200) errors.push('Egg mass seems unusually large (>200g)')
-  if (input.kv > 1.0) errors.push('Kv constant should typically be less than 1.0')
+  // Check acceptable ranges for Skua eggs
+  if (input.length < 60 || input.length > 85) errors.push('Egg length must be between 60-85mm (typical Skua range)')
+  if (input.breadth < 40 || input.breadth > 60) errors.push('Egg breadth must be between 40-60mm (typical Skua range)')
+  if (input.mass < 70 || input.mass > 120) errors.push('Egg mass must be between 70-120g (typical Skua range)')
+  if (input.kv < 0.1 || input.kv > 1.0) errors.push('Kv constant must be between 0.1-1.0')
   
   // Check species type
   if (!['arctic', 'great'].includes(input.speciesType)) {
     errors.push('Species type must be either "arctic" or "great"')
+  }
+  
+  // Pre-calculate density to check if it will work with TBH formula
+  if (errors.length === 0) {
+    try {
+      const volumeMm3 = input.kv * input.length * Math.pow(input.breadth, 2)
+      const volumeCm3 = volumeMm3 / 1000
+      const density = input.mass / volumeCm3
+      
+      // Check if density is in range that works with TBH formula
+      if (density < 0.5 || density > 1.5) {
+        errors.push('Calculated egg density is outside valid range for TBH formula (0.5-1.5 g/cm³)')
+      }
+      
+      // Check discriminant
+      const B = 0.05818, C = 0.3175, D = 0.8746
+      const discriminant = B + C * (D - density)
+      if (discriminant < 0) {
+        errors.push('Input parameters would result in invalid calculation (negative discriminant)')
+      }
+    } catch (e) {
+      errors.push('Input parameters are invalid for calculation')
+    }
   }
   
   return {

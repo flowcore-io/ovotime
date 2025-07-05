@@ -72,50 +72,67 @@ export default function MeasurementForm({
 
   // Real-time calculation when form data changes
   useEffect(() => {
-    const performCalculation = async () => {
-      const { measurements, speciesType } = formData
-      
-      // Skip calculation if essential fields are missing or zero
-      if (measurements.length <= 0 || measurements.breadth <= 0 || measurements.mass <= 0 || measurements.kv <= 0) {
-        setCalculation(null)
-        onCalculationUpdate?.(null)
-        return
-      }
-
-      setIsCalculating(true)
-      
-      try {
-        const input: SkuaCalculationInput = {
-          length: measurements.length,
-          breadth: measurements.breadth,
-          mass: measurements.mass,
-          kv: measurements.kv,
-          speciesType
-        }
-
-        // Validate input
-        const validation = validateCalculationInput(input)
-        if (!validation.isValid) {
+    // Debounce calculations to avoid intermediate invalid states
+    const timeoutId = setTimeout(() => {
+      const performCalculation = async () => {
+        const { measurements, speciesType } = formData
+        
+        // Skip calculation if essential fields are missing or zero
+        if (measurements.length <= 0 || measurements.breadth <= 0 || measurements.mass <= 0 || measurements.kv <= 0) {
           setCalculation(null)
           onCalculationUpdate?.(null)
           return
         }
 
-        // Perform calculation
-        const result = calculateSkuaTBH(input)
-        setCalculation(result)
-        onCalculationUpdate?.(result)
+        // Additional range checks before attempting calculation
+        if (measurements.length < 60 || measurements.length > 85 ||
+            measurements.breadth < 40 || measurements.breadth > 60 ||
+            measurements.mass < 70 || measurements.mass > 120) {
+          setCalculation(null)
+          onCalculationUpdate?.(null)
+          return
+        }
 
-      } catch (error) {
-        console.error('Calculation error:', error)
-        setCalculation(null)
-        onCalculationUpdate?.(null)
-      } finally {
-        setIsCalculating(false)
+        setIsCalculating(true)
+        
+        try {
+          const input: SkuaCalculationInput = {
+            length: measurements.length,
+            breadth: measurements.breadth,
+            mass: measurements.mass,
+            kv: measurements.kv,
+            speciesType
+          }
+
+          // Validate input
+          const validation = validateCalculationInput(input)
+          if (!validation.isValid) {
+            setCalculation(null)
+            onCalculationUpdate?.(null)
+            return
+          }
+
+          // Perform calculation
+          const result = calculateSkuaTBH(input)
+          setCalculation(result)
+          onCalculationUpdate?.(result)
+
+        } catch (error) {
+          // Only log errors in development, not production
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Calculation warning:', error instanceof Error ? error.message : 'Unknown error')
+          }
+          setCalculation(null)
+          onCalculationUpdate?.(null)
+        } finally {
+          setIsCalculating(false)
+        }
       }
-    }
 
-    performCalculation()
+      performCalculation()
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timeoutId)
   }, [formData.measurements, formData.speciesType, onCalculationUpdate])
 
   // Form validation
