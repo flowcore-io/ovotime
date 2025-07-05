@@ -1,7 +1,6 @@
 import type { FlowcoreEvent } from "@flowcore/pathways"
 import { z } from "zod"
-import { db } from "../../database"
-import { tableValidationErrors } from "../../database/schema"
+import { pool } from "../../database"
 import { generateId } from "../../lib/utils"
 import { PredictionFailedSchema } from "../contracts/prediction.events"
 
@@ -20,22 +19,37 @@ export async function predictionFailedTransformer(
     failedAt 
   } = event.payload
 
+  const client = await pool.connect()
+
   try {
     // Log the prediction failure
-    await db.insert(tableValidationErrors).values({
-      id: generateId(),
+    await client.query(`
+      INSERT INTO validation_errors (
+        id, 
+        measurement_id, 
+        error_type, 
+        error_message, 
+        field_name, 
+        field_value, 
+        created_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, NOW()
+      )
+    `, [
+      generateId(),
       measurementId,
-      errorType: errorType,
-      errorMessage: errorMessage,
-      fieldName: 'prediction_calculation',
-      fieldValue: JSON.stringify(errorDetails),
-      createdAt: new Date()
-    })
+      errorType,
+      errorMessage,
+      'prediction_calculation',
+      JSON.stringify(errorDetails)
+    ])
 
     console.log(`❌ Prediction ${predictionId} failed: ${errorMessage}`)
 
   } catch (error) {
     console.error(`❌ Failed to process prediction failure for ${predictionId}:`, error)
     throw error
+  } finally {
+    client.release()
   }
 } 

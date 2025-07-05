@@ -22,8 +22,20 @@ export async function POST(request: NextRequest) {
     const measurementId = body.measurementId || generateId()
     const predictionId = generateId()
     
-    // Validate measurement data
-    const validationResult = validateEggMeasurement(body)
+    // Extract measurement data first
+    const { measurements, speciesType, location, researcherNotes, sessionId } = body
+    
+    // Validate measurement data - flatten measurements for validation
+    const validationData = {
+      length: measurements.length,
+      breadth: measurements.breadth,
+      mass: measurements.mass,
+      kv: measurements.kv,
+      speciesType,
+      location
+    }
+    
+    const validationResult = validateEggMeasurement(validationData)
     if (!validationResult.isValid) {
       // Publish measurement rejected event
       await publishMeasurementRejected({
@@ -39,47 +51,76 @@ export async function POST(request: NextRequest) {
         details: validationResult.errors
       }, { status: 400 })
     }
-
-    // Extract measurement data
-    const { measurements, speciesType, location, researcherNotes, sessionId } = body
     
-    // Publish measurement submitted event
-    await publishMeasurementSubmitted({
-      measurementId,
-      sessionId,
-      speciesType,
-      measurements,
-      location,
-      researcherNotes,
-      timestamp: new Date()
-    })
+    // Publish measurement submitted event (with timeout handling)
+    try {
+      await publishMeasurementSubmitted({
+        measurementId,
+        sessionId,
+        speciesType,
+        measurements,
+        location,
+        researcherNotes,
+        timestamp: new Date()
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('timeout')) {
+        console.warn(`⚠️  Measurement submitted event publish timed out for ${measurementId}, but continuing processing...`)
+      } else {
+        throw error
+      }
+    }
 
-    // Publish measurement validated event
-    await publishMeasurementValidated({
-      measurementId,
-      validationStatus: 'valid',
-      normalizedData: measurements,
-      validatedAt: new Date()
-    })
+    // Publish measurement validated event (don't block on timeout)
+    try {
+      await publishMeasurementValidated({
+        measurementId,
+        validationStatus: 'valid',
+        normalizedData: measurements,
+        validatedAt: new Date()
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('timeout')) {
+        console.warn(`⚠️  Validation event publish timed out for ${measurementId}, but continuing processing...`)
+      } else {
+        throw error
+      }
+    }
 
     // Add measurement to session if sessionId is provided
     if (sessionId) {
-      await publishSessionMeasurementAdded({
-        sessionId,
-        measurementId,
-        sequenceNumber: 1, // This should be calculated from session
-        addedAt: new Date()
-      })
+      try {
+        await publishSessionMeasurementAdded({
+          sessionId,
+          measurementId,
+          sequenceNumber: 1, // This should be calculated from session
+          addedAt: new Date()
+        })
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('timeout')) {
+          console.warn(`⚠️  Session measurement event publish timed out for ${measurementId}, but continuing processing...`)
+        } else {
+          throw error
+        }
+      }
     }
 
     // Publish prediction requested event
-    await publishPredictionRequested({
-      predictionId,
-      measurementId,
-      sessionId,
-      calculationMethod: 'tbh_skuas',
-      requestedAt: new Date()
-    })
+    try {
+      await publishPredictionRequested({
+        predictionId,
+        measurementId,
+        sessionId,
+        calculationMethod: 'tbh_skuas',
+        requestedAt: new Date()
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('timeout')) {
+        console.warn(`⚠️  Prediction request event publish timed out for ${measurementId}, but continuing processing...`)
+      } else {
+        throw error
+      }
+    }
 
     try {
       // Calculate prediction
@@ -94,24 +135,32 @@ export async function POST(request: NextRequest) {
       const prediction = calculateSkuaTBH(predictionInput)
 
       // Publish prediction calculated event
-      await publishPredictionCalculated({
-        predictionId,
-        measurementId,
-        results: {
-          tbh: prediction.tbh,
-          eggDensity: prediction.eggDensity,
-          eggVolume: prediction.eggVolume,
-          confidence: prediction.confidence,
-          speciesType: prediction.speciesType,
-          calculationTimestamp: new Date()
-        },
-        formula: {
-          name: prediction.formula.name,
-          version: prediction.formula.version,
-          coefficients: prediction.formula.coefficients
-        },
-        calculatedAt: new Date()
-      })
+      try {
+        await publishPredictionCalculated({
+          predictionId,
+          measurementId,
+          results: {
+            tbh: prediction.tbh,
+            eggDensity: prediction.eggDensity,
+            eggVolume: prediction.eggVolume,
+            confidence: prediction.confidence,
+            speciesType: prediction.speciesType,
+            calculationTimestamp: new Date()
+          },
+          formula: {
+            name: prediction.formula.name,
+            version: prediction.formula.version,
+            coefficients: prediction.formula.coefficients
+          },
+          calculatedAt: new Date()
+        })
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('timeout')) {
+          console.warn(`⚠️  Prediction calculated event publish timed out for ${measurementId}, but continuing processing...`)
+        } else {
+          throw error
+        }
+      }
 
       // Brief delay for event processing
       await sleep(100)
@@ -131,17 +180,25 @@ export async function POST(request: NextRequest) {
       console.error("Prediction calculation error:", predictionError)
 
       // Publish prediction failed event
-      await publishPredictionFailed({
-        predictionId,
-        measurementId,
-        errorType: 'calculation_error',
-        errorMessage: predictionError instanceof Error ? predictionError.message : 'Unknown calculation error',
-        errorDetails: {
-          input: { measurements, speciesType },
-          error: predictionError
-        },
-        failedAt: new Date()
-      })
+      try {
+        await publishPredictionFailed({
+          predictionId,
+          measurementId,
+          errorType: 'calculation_error',
+          errorMessage: predictionError instanceof Error ? predictionError.message : 'Unknown calculation error',
+          errorDetails: {
+            input: { measurements, speciesType },
+            error: predictionError
+          },
+          failedAt: new Date()
+        })
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('timeout')) {
+          console.warn(`⚠️  Prediction failed event publish timed out for ${measurementId}, but continuing processing...`)
+        } else {
+          console.error(`❌ Failed to publish prediction failed event for ${measurementId}:`, error)
+        }
+      }
 
       return NextResponse.json({
         success: false,

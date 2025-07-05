@@ -1,7 +1,6 @@
 import type { FlowcoreEvent } from "@flowcore/pathways"
 import { z } from "zod"
-import { db } from "../../database"
-import { tablePredictions } from "../../database/schema"
+import { pool } from "../../database"
 import { PredictionCalculatedSchema } from "../contracts/prediction.events"
 
 /**
@@ -18,28 +17,48 @@ export async function predictionCalculatedTransformer(
     calculatedAt 
   } = event.payload
 
+  const client = await pool.connect()
+
   try {
     // Insert prediction record
-    await db.insert(tablePredictions).values({
-      id: predictionId,
+    await client.query(`
+      INSERT INTO predictions (
+        id, 
+        measurement_id, 
+        tbh, 
+        egg_density, 
+        egg_volume, 
+        confidence, 
+        species_type, 
+        formula_name, 
+        formula_version, 
+        formula_coefficients, 
+        calculated_at, 
+        created_at, 
+        updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7::species_type, $8, $9, $10, $11, NOW(), NOW()
+      )
+    `, [
+      predictionId,
       measurementId,
-      tbh: results.tbh.toString(),
-      eggDensity: results.eggDensity.toString(),
-      eggVolume: results.eggVolume.toString(),
-      confidence: results.confidence.toString(),
-      speciesType: results.speciesType,
-      formulaName: formula.name,
-      formulaVersion: formula.version,
-      formulaCoefficients: formula.coefficients,
-      calculatedAt: results.calculationTimestamp,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    })
+      results.tbh,
+      results.eggDensity,
+      results.eggVolume,
+      results.confidence,
+      results.speciesType,
+      formula.name,
+      formula.version,
+      JSON.stringify(formula.coefficients),
+      results.calculationTimestamp
+    ])
 
     console.log(`✅ Prediction ${predictionId} calculated successfully - TBH: ${results.tbh} days`)
 
   } catch (error) {
     console.error(`❌ Failed to process prediction calculation for ${predictionId}:`, error)
     throw error
+  } finally {
+    client.release()
   }
 } 

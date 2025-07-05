@@ -1,7 +1,7 @@
 'use client'
 
 import type { SkuaCalculationResult } from '@/src/lib/calculations/skua-formulas'
-import { CartesianGrid, Legend, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from 'recharts'
+import { CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from 'recharts'
 
 interface MeasurementData {
   measurementId: string
@@ -38,13 +38,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           {data.speciesType === 'arctic' ? 'Arctic Skua' : 'Great Skua'}
         </p>
         <p className="text-sm">
+          <span className="font-medium">DBH:</span> {data.dbh.toFixed(2)} days
+        </p>
+        <p className="text-sm">
           <span className="font-medium">Egg Density:</span> {data.eggDensity.toFixed(4)} g/cm³
-        </p>
-        <p className="text-sm">
-          <span className="font-medium">Egg Volume:</span> {data.eggVolume.toFixed(2)} cm³
-        </p>
-        <p className="text-sm">
-          <span className="font-medium">TBH:</span> {data.tbh.toFixed(2)} days
         </p>
         <p className="text-sm">
           <span className="font-medium">Confidence:</span> {(data.confidence * 100).toFixed(1)}%
@@ -66,14 +63,131 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null
 }
 
+// Individual chart component for each species
+const SpeciesChart = ({ 
+  data, 
+  speciesType, 
+  height 
+}: { 
+  data: any[], 
+  speciesType: 'arctic' | 'great', 
+  height: number 
+}) => {
+  const speciesName = speciesType === 'arctic' ? 'Arctic Skua' : 'Great Skua'
+  const color = SPECIES_COLORS[speciesType]
+
+  if (data.length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          {speciesName} - DBH vs Egg Density
+        </h3>
+        <div className="flex items-center justify-center h-64 text-gray-500">
+          <div className="text-center">
+            <p className="text-lg">No {speciesName.toLowerCase()} data</p>
+            <p className="text-sm mt-2">Submit measurements to see analysis</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          {speciesName} - DBH vs Egg Density
+        </h3>
+        <p className="text-sm text-gray-600">
+          Egg density progression for {data.length} measurement{data.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+
+      <ResponsiveContainer width="100%" height={height}>
+        <ScatterChart
+          data={data}
+          margin={{
+            top: 20,
+            right: 30,
+            bottom: 60,
+            left: 60,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis 
+            type="number" 
+            dataKey="dbh" 
+            name="Days Before Hatching"
+            unit=" days"
+            domain={[30, 0]}
+            reversed={true}
+            tick={{ fontSize: 12 }}
+            label={{ 
+              value: 'Days Before Hatching (DBH)', 
+              position: 'insideBottom', 
+              offset: -40,
+              style: { textAnchor: 'middle' }
+            }}
+          />
+          <YAxis 
+            type="number" 
+            dataKey="eggDensity" 
+            name="Egg Density"
+            unit=" g/cm³"
+            domain={['dataMin - 0.01', 'dataMax + 0.01']}
+            tick={{ fontSize: 12 }}
+            label={{ 
+              value: 'Egg Density (g/cm³)', 
+              angle: -90, 
+              position: 'insideLeft',
+              style: { textAnchor: 'middle' }
+            }}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          
+          <Scatter
+            name={speciesName}
+            data={data}
+            fill={color}
+            fillOpacity={0.8}
+            stroke={color}
+            strokeWidth={2}
+            r={8}
+          />
+        </ScatterChart>
+      </ResponsiveContainer>
+
+      {/* Chart Statistics */}
+      <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+        <div className="text-center">
+          <p className="font-medium text-gray-900">{data.length}</p>
+          <p className="text-gray-500">Measurements</p>
+        </div>
+        <div className="text-center">
+          <p className="font-medium" style={{ color }}>
+            {data.length > 0 ? (data.reduce((sum, item) => sum + item.dbh, 0) / data.length).toFixed(1) : '0'}
+          </p>
+          <p className="text-gray-500">Avg DBH (days)</p>
+        </div>
+        <div className="text-center">
+          <p className="font-medium" style={{ color }}>
+            {data.length > 0 ? (data.reduce((sum, item) => sum + item.eggDensity, 0) / data.length).toFixed(4) : '0'}
+          </p>
+          <p className="text-gray-500">Avg Density (g/cm³)</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function TBHScatterChart({ data, className = '', height = 400 }: TBHScatterChartProps) {
   // Transform data for the chart
   const chartData = data.map(item => ({
     measurementId: item.measurementId,
     speciesType: item.speciesType,
+    dbh: item.prediction.tbh, // Using TBH as DBH (Days Before Hatching)
     eggDensity: item.prediction.eggDensity,
     eggVolume: item.prediction.eggVolume,
-    tbh: item.prediction.tbh,
     confidence: item.prediction.confidence,
     length: item.measurements.length,
     breadth: item.measurements.breadth,
@@ -81,7 +195,7 @@ export default function TBHScatterChart({ data, className = '', height = 400 }: 
     submittedAt: item.submittedAt
   }))
 
-  // Separate data by species for different series
+  // Separate data by species
   const arcticData = chartData.filter(item => item.speciesType === 'arctic')
   const greatData = chartData.filter(item => item.speciesType === 'great')
 
@@ -89,7 +203,7 @@ export default function TBHScatterChart({ data, className = '', height = 400 }: 
     return (
       <div className={`bg-white rounded-lg shadow-lg p-6 ${className}`}>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          TBH Analysis - Egg Density vs Volume
+          DBH Analysis - Days Before Hatching vs Egg Density
         </h3>
         <div className="flex items-center justify-center h-64 text-gray-500">
           <div className="text-center">
@@ -102,98 +216,42 @@ export default function TBHScatterChart({ data, className = '', height = 400 }: 
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-lg p-6 ${className}`}>
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          TBH Analysis - Egg Density vs Volume
-        </h3>
+    <div className={`space-y-6 ${className}`}>
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">
+          DBH Analysis - Days Before Hatching vs Egg Density
+        </h2>
         <p className="text-sm text-gray-600">
-          Scatter plot showing the relationship between egg density and volume for {chartData.length} measurement{chartData.length !== 1 ? 's' : ''}
+          Scatter plots showing the relationship between days before hatching and egg density progression for Arctic and Great Skuas
         </p>
+        <div className="mt-4 flex items-center gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <span>Arctic Skua ({arcticData.length})</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+            <span>Great Skua ({greatData.length})</span>
+          </div>
+          <div className="ml-auto">
+            <span className="font-medium">Total: {chartData.length} measurements</span>
+          </div>
+        </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={height}>
-        <ScatterChart
-          margin={{
-            top: 20,
-            right: 30,
-            bottom: 20,
-            left: 20,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis 
-            type="number" 
-            dataKey="eggDensity" 
-            name="Egg Density"
-            unit=" g/cm³"
-            domain={['dataMin - 0.01', 'dataMax + 0.01']}
-            tick={{ fontSize: 12 }}
-            label={{ value: 'Egg Density (g/cm³)', position: 'insideBottom', offset: -10 }}
-          />
-          <YAxis 
-            type="number" 
-            dataKey="eggVolume" 
-            name="Egg Volume"
-            unit=" cm³"
-            domain={['dataMin - 0.5', 'dataMax + 0.5']}
-            tick={{ fontSize: 12 }}
-            label={{ value: 'Egg Volume (cm³)', angle: -90, position: 'insideLeft' }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend 
-            verticalAlign="top"
-            height={36}
-            iconType="circle"
-            wrapperStyle={{ paddingBottom: '20px' }}
-          />
-          
-          {arcticData.length > 0 && (
-            <Scatter
-              name="Arctic Skua"
-              data={arcticData}
-              fill={SPECIES_COLORS.arctic}
-              fillOpacity={0.8}
-              stroke={SPECIES_COLORS.arctic}
-              strokeWidth={2}
-              r={6}
-            />
-          )}
-          
-          {greatData.length > 0 && (
-            <Scatter
-              name="Great Skua"
-              data={greatData}
-              fill={SPECIES_COLORS.great}
-              fillOpacity={0.8}
-              stroke={SPECIES_COLORS.great}
-              strokeWidth={2}
-              r={6}
-            />
-          )}
-        </ScatterChart>
-      </ResponsiveContainer>
-
-      {/* Chart Statistics */}
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-        <div className="text-center">
-          <p className="font-medium text-gray-900">{chartData.length}</p>
-          <p className="text-gray-500">Total Measurements</p>
-        </div>
-        <div className="text-center">
-          <p className="font-medium text-blue-600">{arcticData.length}</p>
-          <p className="text-gray-500">Arctic Skua</p>
-        </div>
-        <div className="text-center">
-          <p className="font-medium text-purple-600">{greatData.length}</p>
-          <p className="text-gray-500">Great Skua</p>
-        </div>
-        <div className="text-center">
-          <p className="font-medium text-gray-900">
-            {chartData.length > 0 ? (chartData.reduce((sum, item) => sum + item.tbh, 0) / chartData.length).toFixed(1) : '0'}
-          </p>
-          <p className="text-gray-500">Avg TBH (days)</p>
-        </div>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <SpeciesChart 
+          data={arcticData} 
+          speciesType="arctic" 
+          height={height} 
+        />
+        <SpeciesChart 
+          data={greatData} 
+          speciesType="great" 
+          height={height} 
+        />
       </div>
     </div>
   )

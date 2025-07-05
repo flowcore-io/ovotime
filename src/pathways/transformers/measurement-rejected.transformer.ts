@@ -1,7 +1,6 @@
 import type { FlowcoreEvent } from "@flowcore/pathways"
 import { z } from "zod"
-import { db } from "../../database"
-import { tableValidationErrors } from "../../database/schema"
+import { pool } from "../../database"
 import { generateId } from "../../lib/utils"
 import { MeasurementRejectedSchema } from "../contracts/measurement.events"
 
@@ -18,16 +17,27 @@ export async function measurementRejectedTransformer(
     rejectedAt 
   } = event.payload
 
+  const client = await pool.connect()
+
   try {
     // Log rejection and validation errors
     for (const error of validationErrors) {
-      await db.insert(tableValidationErrors).values({
-        id: generateId(),
+      await client.query(`
+        INSERT INTO validation_errors (
+          id, 
+          measurement_id, 
+          error_type, 
+          error_message, 
+          created_at
+        ) VALUES (
+          $1, $2, $3, $4, NOW()
+        )
+      `, [
+        generateId(),
         measurementId,
-        errorType: 'rejection_error',
-        errorMessage: error,
-        createdAt: new Date()
-      })
+        'rejection_error',
+        error
+      ])
     }
 
     console.log(`❌ Measurement ${measurementId} rejected: ${rejectionReason}`)
@@ -35,5 +45,7 @@ export async function measurementRejectedTransformer(
   } catch (error) {
     console.error(`❌ Failed to process measurement rejection for ${measurementId}:`, error)
     throw error
+  } finally {
+    client.release()
   }
 } 

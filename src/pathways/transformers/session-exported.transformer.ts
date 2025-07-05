@@ -1,7 +1,6 @@
 import type { FlowcoreEvent } from "@flowcore/pathways"
 import { z } from "zod"
-import { db } from "../../database"
-import { tableSessionExports } from "../../database/schema"
+import { pool } from "../../database"
 import { generateId } from "../../lib/utils"
 import { SessionExportedSchema } from "../contracts/session.events"
 
@@ -21,24 +20,41 @@ export async function sessionExportedTransformer(
     exportedAt 
   } = event.payload
 
+  const client = await pool.connect()
+
   try {
     // Insert session export record
-    await db.insert(tableSessionExports).values({
-      id: generateId(),
+    await client.query(`
+      INSERT INTO session_exports (
+        id, 
+        session_id, 
+        export_format, 
+        exported_by, 
+        export_options, 
+        file_size, 
+        download_url, 
+        exported_at, 
+        created_at
+      ) VALUES (
+        $1, $2, $3::export_format, $4, $5, $6, $7, $8, NOW()
+      )
+    `, [
+      generateId(),
       sessionId,
       exportFormat,
       exportedBy,
-      exportOptions: JSON.stringify(exportOptions),
+      JSON.stringify(exportOptions),
       fileSize,
       downloadUrl,
-      exportedAt,
-      createdAt: new Date()
-    })
+      exportedAt
+    ])
 
     console.log(`✅ Session ${sessionId} exported in ${exportFormat} format by ${exportedBy}`)
 
   } catch (error) {
     console.error(`❌ Failed to process session export for ${sessionId}:`, error)
     throw error
+  } finally {
+    client.release()
   }
 } 
