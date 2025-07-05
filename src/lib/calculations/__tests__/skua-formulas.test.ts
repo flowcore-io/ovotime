@@ -180,7 +180,7 @@ describe('Skua Formula Calculations', () => {
   describe('Formula accuracy validation', () => {
     it('should have significantly improved accuracy with corrected formula', () => {
       const originalE = -0.1588
-      const correctedE = -0.01588
+      // const correctedE = -0.01588  // Not used in calculation
       let totalErrorOriginal = 0
       let totalErrorCorrected = 0
 

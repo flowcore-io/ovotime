@@ -76,6 +76,7 @@ export default function HomePage() {
         const result = await response.json()
         
         if (result.success) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setPersistedMeasurements(result.data.measurements.map((m: any) => ({
             ...m,
             submittedAt: new Date(m.submittedAt),
@@ -123,6 +124,7 @@ export default function HomePage() {
         const measurementsResult = await measurementsResponse.json()
         
         if (measurementsResult.success) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setPersistedMeasurements(measurementsResult.data.measurements.map((m: any) => ({
             ...m,
             submittedAt: new Date(m.submittedAt),
@@ -177,6 +179,7 @@ export default function HomePage() {
         const measurementsResult = await measurementsResponse.json()
         
         if (measurementsResult.success) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setPersistedMeasurements(measurementsResult.data.measurements.map((m: any) => ({
             ...m,
             submittedAt: new Date(m.submittedAt),
@@ -306,7 +309,7 @@ export default function HomePage() {
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                       <span className="ml-2 text-gray-600">Loading measurements...</span>
                     </div>
-                  ) : allMeasurements.map((entry, index) => (
+                  ) : allMeasurements.map((entry) => (
                     <div
                       key={entry.measurementId}
                       className={`border rounded-lg p-4 transition-colors cursor-pointer ${

@@ -39,7 +39,7 @@ export const testConnection = async () => {
 /**
  * Helper function to create enum if it doesn't exist
  */
-async function createEnumIfNotExists(client: any, enumName: string, values: string[]) {
+async function createEnumIfNotExists(client: { query: (query: string, values?: unknown[]) => Promise<{ rows: unknown[] }> }, enumName: string, values: string[]) {
   try {
     const result = await client.query(
       "SELECT 1 FROM pg_type WHERE typname = $1",

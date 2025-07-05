@@ -260,7 +260,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN sessions s ON m.session_id = s.id
         WHERE 1=1
       `
-      const params: any[] = []
+      const params: unknown[] = []
       let paramIndex = 1
 
       if (sessionId) {
@@ -293,7 +293,7 @@ export async function GET(request: NextRequest) {
         FROM measurements m
         WHERE 1=1
       `
-      const countParams: any[] = []
+      const countParams: unknown[] = []
       let countParamIndex = 1
 
       if (sessionId) {

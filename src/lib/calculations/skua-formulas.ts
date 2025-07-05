@@ -244,7 +244,7 @@ export function validateCalculationInput(input: SkuaCalculationInput): { isValid
       if (discriminant < 0) {
         errors.push('Input parameters would result in invalid calculation (negative discriminant)')
       }
-    } catch (e) {
+    } catch {
       errors.push('Input parameters are invalid for calculation')
     }
   }

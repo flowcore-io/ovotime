@@ -133,7 +133,7 @@ export default function MeasurementForm({
     }, 300) // 300ms debounce
 
     return () => clearTimeout(timeoutId)
-  }, [formData.measurements, formData.speciesType, onCalculationUpdate])
+  }, [formData.measurements, formData.speciesType, onCalculationUpdate, formData])
 
   // Form validation
   useEffect(() => {
@@ -171,7 +171,7 @@ export default function MeasurementForm({
     validateForm()
   }, [formData, calculation])
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: unknown) => {
     setFormData(prev => {
       if (field.startsWith('measurements.')) {
         const measurementField = field.split('.')[1]

@@ -17,7 +17,7 @@ export async function PATCH(
     try {
       // Build dynamic update query
       const updateFields: string[] = []
-      const values: any[] = []
+      const values: unknown[] = []
       let paramIndex = 1
 
       if (body.status) {
