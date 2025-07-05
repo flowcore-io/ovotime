@@ -62,8 +62,19 @@ export const MeasurementRejectedSchema = z.object({
 })
 
 /**
+ * Schema for measurement archived event
+ */
+export const MeasurementArchivedSchema = z.object({
+  measurementId: z.string(),
+  archivedBy: z.string().min(1).max(255),
+  archiveReason: z.string().max(500).optional(),
+  archivedAt: dateSchema
+})
+
+/**
  * Type definitions for measurement events
  */
 export type MeasurementSubmittedEvent = z.infer<typeof MeasurementSubmittedSchema>
 export type MeasurementValidatedEvent = z.infer<typeof MeasurementValidatedSchema>
-export type MeasurementRejectedEvent = z.infer<typeof MeasurementRejectedSchema> 
+export type MeasurementRejectedEvent = z.infer<typeof MeasurementRejectedSchema>
+export type MeasurementArchivedEvent = z.infer<typeof MeasurementArchivedSchema> 

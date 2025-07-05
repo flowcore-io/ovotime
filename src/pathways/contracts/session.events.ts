@@ -76,9 +76,20 @@ export const SessionExportedSchema = z.object({
 })
 
 /**
+ * Schema for session archived event
+ */
+export const SessionArchivedSchema = z.object({
+  sessionId: z.string(),
+  archivedBy: z.string().min(1).max(255),
+  archiveReason: z.string().max(500).optional(),
+  archivedAt: dateSchema
+})
+
+/**
  * Type definitions for session events
  */
 export type SessionStartedEvent = z.infer<typeof SessionStartedSchema>
 export type SessionMeasurementAddedEvent = z.infer<typeof SessionMeasurementAddedSchema>
 export type SessionCompletedEvent = z.infer<typeof SessionCompletedSchema>
-export type SessionExportedEvent = z.infer<typeof SessionExportedSchema> 
+export type SessionExportedEvent = z.infer<typeof SessionExportedSchema>
+export type SessionArchivedEvent = z.infer<typeof SessionArchivedSchema> 

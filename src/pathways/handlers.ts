@@ -10,12 +10,14 @@
 import { pathways } from "./pathways"
 
 // Import transformers for when handlers are implemented
+import { measurementArchivedTransformer } from "./transformers/measurement-archived.transformer"
 import { measurementRejectedTransformer } from "./transformers/measurement-rejected.transformer"
 import { measurementSubmittedTransformer } from "./transformers/measurement-submitted.transformer"
 import { measurementValidatedTransformer } from "./transformers/measurement-validated.transformer"
 import { predictionCalculatedTransformer } from "./transformers/prediction-calculated.transformer"
 import { predictionFailedTransformer } from "./transformers/prediction-failed.transformer"
 import { predictionRequestedTransformer } from "./transformers/prediction-requested.transformer"
+import { sessionArchivedTransformer } from "./transformers/session-archived.transformer"
 import { sessionCompletedTransformer } from "./transformers/session-completed.transformer"
 import { sessionExportedTransformer } from "./transformers/session-exported.transformer"
 import { sessionMeasurementAddedTransformer } from "./transformers/session-measurement-added.transformer"
@@ -41,6 +43,11 @@ if (pathways) {
   pathways.handle("measurements.0/measurement.rejected.0", async (event: any) => {
     console.log("🔄 Processing measurement rejected event", event.eventId)
     await measurementRejectedTransformer(event)
+  })
+  
+  pathways.handle("measurements.0/measurement.archived.0", async (event: any) => {
+    console.log("🔄 Processing measurement archived event", event.eventId)
+    await measurementArchivedTransformer(event)
   })
   
   // Prediction events
@@ -80,14 +87,22 @@ if (pathways) {
     await sessionExportedTransformer(event)
   })
   
+  pathways.handle("sessions.0/session.archived.0", async (event: any) => {
+    console.log("🔄 Processing session archived event", event.eventId)
+    await sessionArchivedTransformer(event)
+  })
+  
   console.log("✅ Event handlers registered successfully")
 } else {
   console.log("⚠️  Pathways not configured - event handlers not registered")
 }
 
 export {
+    measurementArchivedTransformer,
     measurementRejectedTransformer, measurementSubmittedTransformer,
     measurementValidatedTransformer, predictionCalculatedTransformer,
-    predictionFailedTransformer, predictionRequestedTransformer, sessionCompletedTransformer,
+    predictionFailedTransformer, predictionRequestedTransformer,
+    sessionArchivedTransformer,
+    sessionCompletedTransformer,
     sessionExportedTransformer, sessionMeasurementAddedTransformer, sessionStartedTransformer
 }

@@ -70,7 +70,7 @@ export const initializeDatabase = async () => {
     
     // Create enums
     await createEnumIfNotExists(client, 'species_type', ['arctic', 'great'])
-    await createEnumIfNotExists(client, 'session_status', ['active', 'completed', 'cancelled'])
+    await createEnumIfNotExists(client, 'session_status', ['active', 'completed', 'cancelled', 'archived'])
     await createEnumIfNotExists(client, 'export_format', ['csv', 'json', 'xlsx'])
 
     console.log("📊 Creating database tables...")
@@ -86,6 +86,10 @@ export const initializeDatabase = async () => {
         research_goals TEXT,
         measurement_count INTEGER NOT NULL DEFAULT 0,
         status session_status NOT NULL DEFAULT 'active',
+        archived BOOLEAN NOT NULL DEFAULT false,
+        archived_by VARCHAR(255),
+        archive_reason TEXT,
+        archived_at TIMESTAMP,
         started_at TIMESTAMP NOT NULL,
         completed_at TIMESTAMP,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -107,6 +111,10 @@ export const initializeDatabase = async () => {
         longitude DECIMAL(11,7),
         site_name VARCHAR(255),
         researcher_notes TEXT,
+        archived BOOLEAN NOT NULL DEFAULT false,
+        archived_by VARCHAR(255),
+        archive_reason TEXT,
+        archived_at TIMESTAMP,
         submitted_at TIMESTAMP NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()

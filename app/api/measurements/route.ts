@@ -1,3 +1,4 @@
+import { pool } from "@/src/database"
 import { calculateSkuaTBH } from "@/src/lib/calculations/skua-formulas"
 import { generateId, sleep } from "@/src/lib/utils"
 import { validateEggMeasurement } from "@/src/lib/validation"
@@ -235,27 +236,136 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const sessionId = searchParams.get('sessionId')
     const speciesType = searchParams.get('speciesType')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    const includeArchived = searchParams.get('includeArchived') === 'true'
+    const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // TODO: Implement database query to retrieve measurements
-    // This would use the db instance to query the measurements table
-    // with appropriate filters and pagination
+    const client = await pool.connect()
+    try {
+      let query = `
+        SELECT 
+          m.*,
+          p.id as prediction_id,
+          p.tbh,
+          p.egg_density,
+          p.egg_volume,
+          p.confidence,
+          p.formula_name,
+          p.formula_version,
+          p.calculated_at as prediction_calculated_at,
+          s.session_name,
+          s.researcher_id
+        FROM measurements m
+        LEFT JOIN predictions p ON m.id = p.measurement_id
+        LEFT JOIN sessions s ON m.session_id = s.id
+        WHERE 1=1
+      `
+      const params: any[] = []
+      let paramIndex = 1
 
-    // For now, return a placeholder response
-    return NextResponse.json({
-      success: true,
-      data: {
-        measurements: [],
-        pagination: {
-          limit,
-          offset,
-          total: 0,
-          hasMore: false
-        }
-      },
-      message: "Measurements retrieved successfully"
-    })
+      if (sessionId) {
+        query += ` AND m.session_id = $${paramIndex}`
+        params.push(sessionId)
+        paramIndex++
+      }
+
+      if (speciesType) {
+        query += ` AND m.species_type = $${paramIndex}::species_type`
+        params.push(speciesType)
+        paramIndex++
+      }
+
+      if (!includeArchived) {
+        query += ` AND m.archived = false`
+      }
+
+      query += ` 
+        ORDER BY m.submitted_at DESC
+        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+      `
+      params.push(limit, offset)
+
+      const result = await client.query(query, params)
+      
+      // Get total count for pagination
+      let countQuery = `
+        SELECT COUNT(*) as total 
+        FROM measurements m
+        WHERE 1=1
+      `
+      const countParams: any[] = []
+      let countParamIndex = 1
+
+      if (sessionId) {
+        countQuery += ` AND m.session_id = $${countParamIndex}`
+        countParams.push(sessionId)
+        countParamIndex++
+      }
+
+      if (speciesType) {
+        countQuery += ` AND m.species_type = $${countParamIndex}::species_type`
+        countParams.push(speciesType)
+        countParamIndex++
+      }
+
+      if (!includeArchived) {
+        countQuery += ` AND m.archived = false`
+      }
+
+      const countResult = await client.query(countQuery, countParams)
+      const total = parseInt(countResult.rows[0].total)
+
+      const measurements = result.rows.map(row => ({
+        measurementId: row.id,
+        sessionId: row.session_id,
+        sessionName: row.session_name,
+        researcher: row.researcher_id,
+        speciesType: row.species_type,
+        measurements: {
+          length: parseFloat(row.length),
+          breadth: parseFloat(row.breadth),
+          mass: parseFloat(row.mass),
+          kv: parseFloat(row.kv)
+        },
+        location: {
+          latitude: row.latitude ? parseFloat(row.latitude) : undefined,
+          longitude: row.longitude ? parseFloat(row.longitude) : undefined,
+          siteName: row.site_name
+        },
+        researcherNotes: row.researcher_notes,
+        prediction: row.prediction_id ? {
+          tbh: parseFloat(row.tbh),
+          eggDensity: parseFloat(row.egg_density),
+          eggVolume: parseFloat(row.egg_volume),
+          confidence: parseFloat(row.confidence),
+          formulaName: row.formula_name,
+          formulaVersion: row.formula_version,
+          calculatedAt: row.prediction_calculated_at
+        } : null,
+        submittedAt: row.submitted_at,
+        archived: row.archived,
+        archivedBy: row.archived_by,
+        archiveReason: row.archive_reason,
+        archivedAt: row.archived_at
+      }))
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          measurements,
+          pagination: {
+            limit,
+            offset,
+            total,
+            hasMore: offset + limit < total
+          }
+        },
+        message: "Measurements retrieved successfully"
+      })
+
+    } finally {
+      client.release()
+    }
 
   } catch (error) {
     console.error("Failed to retrieve measurements:", error)

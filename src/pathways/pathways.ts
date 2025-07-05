@@ -8,6 +8,7 @@ import postgres from "postgres"
 
 // Import event schemas  
 import {
+    MeasurementArchivedSchema,
     MeasurementRejectedSchema,
     MeasurementSubmittedSchema,
     MeasurementValidatedSchema
@@ -18,6 +19,7 @@ import {
     PredictionRequestedSchema
 } from "./contracts/prediction.events"
 import {
+    SessionArchivedSchema,
     SessionCompletedSchema,
     SessionExportedSchema,
     SessionMeasurementAddedSchema,
@@ -70,6 +72,11 @@ if (pathwaysConfig.apiKey) {
       eventType: "measurement.rejected.0",
       schema: MeasurementRejectedSchema,
     })
+    .register({
+      flowType: "measurements.0", 
+      eventType: "measurement.archived.0",
+      schema: MeasurementArchivedSchema,
+    })
     // Register prediction events
     .register({
       flowType: "predictions.0",
@@ -106,6 +113,11 @@ if (pathwaysConfig.apiKey) {
       flowType: "sessions.0",
       eventType: "session.exported.0", 
       schema: SessionExportedSchema,
+    })
+    .register({
+      flowType: "sessions.0",
+      eventType: "session.archived.0", 
+      schema: SessionArchivedSchema,
     })
 }
 
@@ -183,6 +195,10 @@ export const publishMeasurementRejected = async (payload: any) => {
   return safeWrite("measurements.0/measurement.rejected.0", payload)
 }
 
+export const publishMeasurementArchived = async (payload: any) => {
+  return safeWrite("measurements.0/measurement.archived.0", payload)
+}
+
 export const publishPredictionRequested = async (payload: any) => {
   return safeWrite("predictions.0/prediction.requested.0", payload)
 }
@@ -209,4 +225,8 @@ export const publishSessionCompleted = async (payload: any) => {
 
 export const publishSessionExported = async (payload: any) => {
   return safeWrite("sessions.0/session.exported.0", payload)
+}
+
+export const publishSessionArchived = async (payload: any) => {
+  return safeWrite("sessions.0/session.archived.0", payload)
 } 
