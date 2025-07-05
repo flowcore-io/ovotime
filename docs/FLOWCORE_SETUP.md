@@ -124,7 +124,7 @@ Use the `flowcore.yaml` for local development:
 
 ```bash
 # Start local proxy (in separate terminal)
-flowcore scenario local -f flowcore.yaml -s now -e http://localhost:3000/api/flowcore/transformer -H 'X-Secret: 1234'
+flowcore scenario local -f flowcore.local.development.yaml -s now -e http://localhost:3000/api/flowcore/transformer -H 'X-Secret: 1234'
 ```
 
 ## 🚀 Vercel Deployment

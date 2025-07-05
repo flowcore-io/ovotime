@@ -37,15 +37,16 @@ Where:
 - **💾 Data Persistence**: PostgreSQL database with Drizzle ORM
 - **🔄 Event-Driven Architecture**: Built with Flowcore Pathways for scalability
 
-## 🚀 Quick Start for Developers
+## 🚀 Development Environment Setup
 
 ### Prerequisites
 
 - **Node.js** 18+ and **npm**/**yarn**
-- **PostgreSQL** database (local or remote)
+- **Docker** and **Docker Compose** for local PostgreSQL
 - **Git** for version control
+- **Flowcore Account** (required for event sourcing architecture)
 
-### Installation
+### 1. Clone and Install Dependencies
 
 ```bash
 # Clone the repository
@@ -55,32 +56,205 @@ cd ovotime
 # Install dependencies
 yarn install
 # or npm install
-
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your database credentials
 ```
 
-### Database Setup
+### 2. Environment Configuration
+
+```bash
+# Copy the environment example file
+cp env.example .env.local
+
+# Edit .env.local with your configuration
+```
+
+Update `.env.local` with your settings:
+
+```env
+# Database Configuration
+DATABASE_URL=postgresql://ovotime:ovotime_dev@localhost:5432/ovotime
+
+# Flowcore Configuration (optional)
+FLOWCORE_TENANT=ovotime
+FLOWCORE_API_KEY=your-flowcore-api-key-here
+FLOWCORE_API_URL=https://webhook.api.flowcore.io
+
+# Application Configuration
+OVOTIME_API_KEY=your-secure-random-key-here
+NODE_ENV=development
+```
+
+### 3. Database Setup with Docker
+
+Start the local PostgreSQL database:
+
+```bash
+# Start PostgreSQL and Adminer (database UI)
+docker-compose up -d
+
+# Verify the database is running
+docker-compose ps
+```
+
+This will start:
+- **PostgreSQL** on port `5432`
+- **Adminer** (database UI) on port `8080` at http://localhost:8080
+
+#### Database Management
 
 ```bash
 # Generate database schema
 yarn db:generate
 
-# Run migrations
+# Run migrations to set up tables
 yarn db:migrate
 
 # (Optional) Open Drizzle Studio to view database
 yarn db:studio
+
+# View database in Adminer
+# Go to http://localhost:8080
+# Server: postgres, Username: ovotime, Password: ovotime_dev, Database: ovotime
 ```
 
-### Development Server
+### 4. Flowcore Integration (Required)
+
+Ovotime uses event sourcing architecture with Flowcore. Set up your Flowcore account:
+
+1. **Create Flowcore Account**:
+   - Sign up at [Flowcore.io](https://flowcore.io)
+   - Create a new tenant (e.g., "ovotime")
+
+2. **Install Flowcore CLI**:
+   ```bash
+   npm install -g @flowcore/cli
+   
+   # Login to Flowcore (uses port 3000)
+   flowcore login
+   ```
+
+3. **Create Data Core and Resources**:
+   ```bash
+   # Create all data cores, flow types, and event types from configuration
+   flowcore data-core apply -f flowcore.yaml
+   ```
+
+4. **Generate API Key**:
+   ```bash
+   # Generate an API key for your application
+   flowcore auth new key --tenant ovotime ovotime-app-key
+   
+   # Copy the generated key to FLOWCORE_API_KEY in .env.local
+   ```
+
+### 5. Start Development Server
 
 ```bash
-# Start the development server
+# Start the Next.js development server
 yarn dev
 
 # Open http://localhost:3000 in your browser
+```
+
+### 6. Verify Setup
+
+Test the application:
+
+1. **Database**: Check that the app loads without database errors
+2. **Measurements**: Try submitting a measurement through the UI
+3. **Sessions**: Navigate to `/sessions` to view session management
+4. **Health Check**: Visit `/api/health` to verify all services
+
+### Development Workflow
+
+```bash
+# Start database
+yarn docker:up
+
+# Run migrations (if needed)
+yarn db:migrate
+
+# Start development server
+yarn dev
+
+# In separate terminal, start Flowcore local proxy
+yarn flowcore:dev
+
+# Make changes and test
+# Database UI: http://localhost:8080
+# App: http://localhost:3000
+# Health: http://localhost:3000/api/health
+```
+
+### 📋 Available Scripts
+
+#### **Development Scripts:**
+```bash
+yarn dev                    # Start Next.js development server
+yarn flowcore:dev           # Start Flowcore local proxy (current events)
+yarn flowcore:dev:backlog   # Start Flowcore local proxy (with backlog)
+yarn docker:up              # Start PostgreSQL database
+yarn docker:down            # Stop PostgreSQL database
+yarn docker:logs            # View database logs
+```
+
+#### **Flowcore Management:**
+```bash
+yarn flowcore:setup         # Apply data core configuration
+yarn flowcore:validate      # Validate flowcore.yaml configuration
+yarn flowcore:status        # List existing data cores
+```
+
+#### **Database Management:**
+```bash
+yarn db:generate            # Generate database schema
+yarn db:migrate             # Run database migrations
+yarn db:push               # Push schema changes
+yarn db:studio             # Open Drizzle Studio
+```
+
+#### **Testing:**
+```bash
+yarn test                   # Run tests
+yarn test:watch            # Run tests in watch mode
+yarn test:coverage         # Run tests with coverage
+```
+
+### Troubleshooting
+
+#### Database Connection Issues
+```bash
+# Check if PostgreSQL is running
+yarn docker:logs
+
+# Restart database
+yarn docker:down && yarn docker:up
+
+# Check database status
+yarn docker:logs postgres
+```
+
+#### Flowcore Issues
+```bash
+# Check Flowcore configuration
+yarn flowcore:validate
+
+# Verify API key is set
+echo $OVOTIME_API_KEY
+
+# Test if data core exists
+yarn flowcore:status
+
+# Check local proxy connection
+yarn flowcore:dev
+```
+
+#### Environment Variables
+```bash
+# Check if all required variables are set
+grep -E "^[A-Z_]+=" .env.local
+
+# Verify database URL format
+echo $DATABASE_URL
 ```
 
 ## 🛠️ Technology Stack

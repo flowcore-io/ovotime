@@ -1,37 +1,39 @@
-# Flowcore Local Development Configuration
-# This is used for local development with the Flowcore CLI
-
+version: 1
 tenant: ovotime
+dataCore: 
+  name: ovotime-research-data
+  deleteProtection: true
+  isPublic: true
+  description: "Ovotime research data for skua egg measurements and predictions"
+  flowTypes:
+    measurements.0:
+      description: "Skua egg measurements and validation events"
+      eventTypes:
+        measurement.submitted.0:
+          description: "New measurement submitted by researcher"
+        measurement.validated.0:
+          description: "Measurement validated and accepted"
+        measurement.rejected.0:
+          description: "Measurement rejected due to validation errors"          
+    predictions.0:
+      description: "Egg hatching time predictions"
+      eventTypes:
+        prediction.requested.0:
+          description: "Prediction calculation requested"
+        prediction.calculated.0:
+          description: "Prediction successfully calculated"
+        prediction.failed.0:
+          description: "Prediction calculation failed"
+    sessions.0:
+      description: "Research session management"
+      eventTypes:
+        session.started.0:
+          description: "New research session started"
+        session.measurement-added.0:
+          description: "Measurement added to session"
+        session.completed.0:
+          description: "Research session completed"
+        session.exported.0:
+          description: "Session data exported"
 
-development:
-    proxyEndpoints:
-        ovotime-research:
-            dataCore: ovotime-research-data
-            flowType: measurements
-            events:
-                - measurement.submitted.v0
-                - measurement.validated.v0
-                - measurement.rejected.v0
-            endpoints:
-                - "" # POST /api/flowcore/transformer is the default
-
-        ovotime-predictions:
-            dataCore: ovotime-research-data
-            flowType: predictions
-            events:
-                - prediction.requested.v0
-                - prediction.calculated.v0
-                - prediction.failed.v0
-            endpoints:
-                - ""
-
-        ovotime-sessions:
-            dataCore: ovotime-research-data
-            flowType: sessions
-            events:
-                - session.started.v0
-                - session.measurement-added.v0
-                - session.completed.v0
-                - session.exported.v0
-            endpoints:
-                - "" 
+ 
