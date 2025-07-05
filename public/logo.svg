@@ -4,8 +4,13 @@
       <stop offset="0%" stop-color="#1ecbe1"/>
       <stop offset="100%" stop-color="#3a7bd5"/>
     </linearGradient>
+    <filter id="shadow" x="0" y="0" width="200" height="200" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.15"/>
+    </filter>
   </defs>
-  <circle cx="100" cy="100" r="75" stroke="url(#logo-gradient)" stroke-width="20" fill="none"/>
-  <line x1="100" y1="100" x2="100" y2="45" stroke="url(#logo-gradient)" stroke-width="12" stroke-linecap="round"/>
-  <circle cx="100" cy="100" r="10" fill="#3a7bd5"/>
+  <g filter="url(#shadow)">
+    <circle cx="100" cy="100" r="75" stroke="url(#logo-gradient)" stroke-width="20" fill="none"/>
+    <line x1="100" y1="100" x2="100" y2="45" stroke="url(#logo-gradient)" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="100" cy="100" r="10" fill="#3a7bd5"/>
+  </g>
 </svg>
