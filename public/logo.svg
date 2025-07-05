@@ -1,16 +1,12 @@
 <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1ecbe1"/>
-      <stop offset="100%" stop-color="#3a7bd5"/>
+    <linearGradient id="egg-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4a574"/>
+      <stop offset="50%" stop-color="#b8956a"/>
+      <stop offset="100%" stop-color="#8b6f47"/>
     </linearGradient>
-    <filter id="shadow" x="0" y="0" width="200" height="200" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.15"/>
-    </filter>
   </defs>
-  <g filter="url(#shadow)">
-    <circle cx="100" cy="100" r="75" stroke="url(#logo-gradient)" stroke-width="20" fill="none"/>
-    <line x1="100" y1="100" x2="100" y2="45" stroke="url(#logo-gradient)" stroke-width="12" stroke-linecap="round"/>
-    <circle cx="100" cy="100" r="10" fill="#3a7bd5"/>
-  </g>
+  <ellipse cx="100" cy="100" rx="55" ry="75" stroke="url(#egg-logo-gradient)" stroke-width="16" fill="none"/>
+  <line x1="100" y1="100" x2="100" y2="40" stroke="#2d1810" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="100" cy="100" r="6" fill="#2d1810"/>
 </svg>
