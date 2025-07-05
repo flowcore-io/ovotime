@@ -1,8 +1,6 @@
 import type { FlowcoreEvent } from "@flowcore/pathways"
-import { eq } from "drizzle-orm"
 import { z } from "zod"
-import { db } from "../../database"
-import { tableSessions } from "../../database/schema"
+import { pool } from "../../database"
 import { SessionCompletedSchema } from "../contracts/session.events"
 
 /**
@@ -20,21 +18,26 @@ export async function sessionCompletedTransformer(
     completedAt 
   } = event.payload
 
+  const client = await pool.connect()
+  
   try {
     // Update session with completion data
-    await db.update(tableSessions)
-      .set({ 
-        status: 'completed',
-        completedAt,
-        measurementCount: totalMeasurements,
-        updatedAt: new Date() 
-      })
-      .where(eq(tableSessions.id, sessionId))
+    await client.query(`
+      UPDATE sessions 
+      SET 
+        status = 'completed'::session_status,
+        completed_at = $1,
+        measurement_count = $2,
+        updated_at = NOW()
+      WHERE id = $3
+    `, [completedAt, totalMeasurements, sessionId])
 
     console.log(`✅ Session ${sessionId} completed with ${totalMeasurements} measurements and ${totalPredictions} predictions`)
 
   } catch (error) {
     console.error(`❌ Failed to process session completion for ${sessionId}:`, error)
     throw error
+  } finally {
+    client.release()
   }
 } 

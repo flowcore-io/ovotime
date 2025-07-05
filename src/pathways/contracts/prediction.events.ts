@@ -1,6 +1,19 @@
 import { z } from "zod"
 
 /**
+ * Helper schema for date fields that handles both Date objects and ISO strings
+ */
+const dateSchema = z.union([
+  z.date(),
+  z.string().datetime()
+]).transform((val) => {
+  if (typeof val === 'string') {
+    return new Date(val)
+  }
+  return val
+}).default(() => new Date())
+
+/**
  * Schema for prediction requested event
  */
 export const PredictionRequestedSchema = z.object({
@@ -8,7 +21,7 @@ export const PredictionRequestedSchema = z.object({
   measurementId: z.string(),
   sessionId: z.string().optional(),
   calculationMethod: z.enum(['tbh_skuas']).default('tbh_skuas'),
-  requestedAt: z.date().default(() => new Date())
+  requestedAt: dateSchema
 })
 
 /**
@@ -23,14 +36,14 @@ export const PredictionCalculatedSchema = z.object({
     eggVolume: z.number(), // VE
     confidence: z.number().min(0).max(1),
     speciesType: z.enum(['arctic', 'great']),
-    calculationTimestamp: z.date().default(() => new Date())
+    calculationTimestamp: dateSchema
   }),
   formula: z.object({
     name: z.string(),
     version: z.string(),
     coefficients: z.record(z.number())
   }),
-  calculatedAt: z.date().default(() => new Date())
+  calculatedAt: dateSchema
 })
 
 /**
@@ -42,7 +55,7 @@ export const PredictionFailedSchema = z.object({
   errorType: z.enum(['validation_error', 'calculation_error', 'system_error']),
   errorMessage: z.string(),
   errorDetails: z.record(z.any()).optional(),
-  failedAt: z.date().default(() => new Date())
+  failedAt: dateSchema
 })
 
 /**

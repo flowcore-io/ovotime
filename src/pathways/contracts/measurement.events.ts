@@ -1,6 +1,19 @@
 import { z } from "zod"
 
 /**
+ * Helper schema for date fields that handles both Date objects and ISO strings
+ */
+const dateSchema = z.union([
+  z.date(),
+  z.string().datetime()
+]).transform((val) => {
+  if (typeof val === 'string') {
+    return new Date(val)
+  }
+  return val
+}).default(() => new Date())
+
+/**
  * Schema for measurement submitted event
  */
 export const MeasurementSubmittedSchema = z.object({
@@ -19,7 +32,7 @@ export const MeasurementSubmittedSchema = z.object({
     siteName: z.string().min(1).max(255).optional()
   }).optional(),
   researcherNotes: z.string().max(1000).optional(),
-  timestamp: z.date().default(() => new Date())
+  timestamp: dateSchema
 })
 
 /**
@@ -35,7 +48,7 @@ export const MeasurementValidatedSchema = z.object({
     mass: z.number(),
     kv: z.number()
   }).optional(),
-  validatedAt: z.date().default(() => new Date())
+  validatedAt: dateSchema
 })
 
 /**
@@ -45,7 +58,7 @@ export const MeasurementRejectedSchema = z.object({
   measurementId: z.string(),
   rejectionReason: z.string(),
   validationErrors: z.array(z.string()),
-  rejectedAt: z.date().default(() => new Date())
+  rejectedAt: dateSchema
 })
 
 /**

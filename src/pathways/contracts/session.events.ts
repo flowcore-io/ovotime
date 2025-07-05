@@ -1,6 +1,19 @@
 import { z } from "zod"
 
 /**
+ * Helper schema for date fields that handles both Date objects and ISO strings
+ */
+const dateSchema = z.union([
+  z.date(),
+  z.string().datetime()
+]).transform((val) => {
+  if (typeof val === 'string') {
+    return new Date(val)
+  }
+  return val
+}).default(() => new Date())
+
+/**
  * Schema for session started event
  */
 export const SessionStartedSchema = z.object({
@@ -14,7 +27,7 @@ export const SessionStartedSchema = z.object({
   }).optional(),
   expectedDuration: z.number().min(1).max(480).optional(), // hours (max 20 days)
   researchGoals: z.string().max(1000).optional(),
-  startedAt: z.date().default(() => new Date())
+  startedAt: dateSchema
 })
 
 /**
@@ -24,7 +37,7 @@ export const SessionMeasurementAddedSchema = z.object({
   sessionId: z.string(),
   measurementId: z.string(),
   sequenceNumber: z.number().min(1),
-  addedAt: z.date().default(() => new Date())
+  addedAt: dateSchema
 })
 
 /**
@@ -41,7 +54,7 @@ export const SessionCompletedSchema = z.object({
     durationHours: z.number().min(0)
   }),
   completionNotes: z.string().max(1000).optional(),
-  completedAt: z.date().default(() => new Date())
+  completedAt: dateSchema
 })
 
 /**
@@ -59,7 +72,7 @@ export const SessionExportedSchema = z.object({
   }),
   fileSize: z.number().min(0).optional(),
   downloadUrl: z.string().optional(),
-  exportedAt: z.date().default(() => new Date())
+  exportedAt: dateSchema
 })
 
 /**

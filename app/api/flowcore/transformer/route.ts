@@ -1,6 +1,6 @@
 import '@/src/pathways/handlers'; // Import to register handlers
-import { pathwaysRouter } from '@/src/pathways/pathways'
-import { NextRequest, NextResponse } from 'next/server'
+import { pathwaysRouter } from '@/src/pathways/pathways';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * POST /api/flowcore/transformer
@@ -19,11 +19,18 @@ export async function POST(request: NextRequest) {
     const event = await request.json()
     
     // Get the secret from headers (following Flowcore documentation)
-    const secret = request.headers.get('x-secret') ?? ''
+    const headerSecret = request.headers.get('x-secret')
+    const expectedSecret = process.env.OVOTIME_API_KEY || "development-key-123"
+    
+    // For local development, be more flexible with secret validation
+    const isLocalDev = process.env.NODE_ENV === 'development'
+    const secret = isLocalDev ? expectedSecret : (headerSecret ?? '')
 
     console.log('📦 Received Flowcore event:', {
       eventType: event.eventType || 'unknown',
-      eventId: event.eventId || 'unknown'
+      eventId: event.eventId || 'unknown',
+      secretProvided: !!headerSecret,
+      isLocalDev
     })
 
     // Process the event using pathways router
@@ -59,7 +66,9 @@ export async function GET() {
       pathwaysConfigured: !!pathwaysRouter,
       tenant: process.env.FLOWCORE_TENANT,
       timestamp: new Date().toISOString(),
-      endpoint: 'POST /api/flowcore/transformer'
+      endpoint: 'POST /api/flowcore/transformer',
+      environment: process.env.NODE_ENV,
+      secretConfigured: !!process.env.OVOTIME_API_KEY
     }
 
     return NextResponse.json(status)

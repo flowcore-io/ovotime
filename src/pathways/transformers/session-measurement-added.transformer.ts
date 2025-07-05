@@ -1,8 +1,6 @@
 import type { FlowcoreEvent } from "@flowcore/pathways"
-import { eq, sql } from "drizzle-orm"
 import { z } from "zod"
-import { db } from "../../database"
-import { tableSessions } from "../../database/schema"
+import { pool } from "../../database"
 import { SessionMeasurementAddedSchema } from "../contracts/session.events"
 
 /**
@@ -18,19 +16,24 @@ export async function sessionMeasurementAddedTransformer(
     addedAt 
   } = event.payload
 
+  const client = await pool.connect()
+  
   try {
     // Increment measurement count for the session
-    await db.update(tableSessions)
-      .set({ 
-        measurementCount: sql`measurement_count + 1`,
-        updatedAt: new Date() 
-      })
-      .where(eq(tableSessions.id, sessionId))
+    await client.query(`
+      UPDATE sessions 
+      SET 
+        measurement_count = measurement_count + 1,
+        updated_at = NOW()
+      WHERE id = $1
+    `, [sessionId])
 
     console.log(`✅ Measurement ${measurementId} added to session ${sessionId} (sequence: ${sequenceNumber})`)
 
   } catch (error) {
     console.error(`❌ Failed to process measurement addition for session ${sessionId}:`, error)
     throw error
+  } finally {
+    client.release()
   }
 } 

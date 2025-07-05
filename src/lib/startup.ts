@@ -1,46 +1,41 @@
-import { testConnection } from "@/src/database"
+import { initializeDatabase, testConnection } from '@/src/database';
 import "@/src/pathways/handlers"; // Import to register event handlers
-import { initializePathways } from "@/src/pathways/pathways"
+import { initializePathways } from '@/src/pathways/pathways';
 
 /**
- * Initialize application services
+ * Initialize the application
+ * Run database initialization and pathways setup
  */
-export async function initializeApplication() {
-  console.log("🚀 Initializing Ovotime application...")
-  
+export const initializeApp = async () => {
+  console.log('🚀 Initializing Ovotime application...')
+
   try {
-    // Test database connection
-    console.log("📊 Testing database connection...")
+    // Test database connection first
     const dbConnected = await testConnection()
-    
     if (!dbConnected) {
-      console.warn("⚠️  Database connection failed - some features may not work")
+      throw new Error('Database connection failed')
     }
-    
+
+    // Initialize database tables
+    console.log('📊 Initializing database tables...')
+    const dbInitialized = await initializeDatabase()
+    if (!dbInitialized) {
+      throw new Error('Database initialization failed')
+    }
+
     // Initialize Flowcore pathways
-    console.log("🔄 Initializing Flowcore pathways...")
+    console.log('🔄 Initializing Flowcore pathways...')
     const pathwaysInitialized = await initializePathways()
-    
-    if (pathwaysInitialized) {
-      console.log("✅ Application initialized successfully with Flowcore")
-    } else {
-      console.log("⚠️  Application initialized in local mode (without Flowcore)")
+    if (!pathwaysInitialized) {
+      console.warn('⚠️  Flowcore pathways not fully initialized - running in local mode')
     }
-    
-    return {
-      database: dbConnected,
-      pathways: pathwaysInitialized,
-      success: true
-    }
-    
+
+    console.log('✅ Ovotime application initialized successfully!')
+    return true
+
   } catch (error) {
-    console.error("❌ Failed to initialize application:", error)
-    return {
-      database: false,
-      pathways: false,
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    }
+    console.error('❌ Failed to initialize application:', error)
+    return false
   }
 }
 
@@ -78,7 +73,7 @@ if (typeof window === 'undefined') {
   
   const ensureInitialized = async () => {
     if (!initialized) {
-      await initializeApplication()
+      await initializeApp()
       initialized = true
     }
   }

@@ -3,6 +3,7 @@ import {
     PathwaysBuilder,
     createPostgresPathwayState,
 } from "@flowcore/pathways"
+import crypto from "crypto"
 import postgres from "postgres"
 
 // Import event schemas  
@@ -55,55 +56,55 @@ if (pathwaysConfig.apiKey) {
     )
     // Register measurement events
     .register({
-      flowType: "measurements",
-      eventType: "measurement.submitted.v0", 
+      flowType: "measurements.0",
+      eventType: "measurement.submitted.0", 
       schema: MeasurementSubmittedSchema,
     })
     .register({
-      flowType: "measurements",
-      eventType: "measurement.validated.v0",
+      flowType: "measurements.0",
+      eventType: "measurement.validated.0",
       schema: MeasurementValidatedSchema,
     })
     .register({
-      flowType: "measurements", 
-      eventType: "measurement.rejected.v0",
+      flowType: "measurements.0", 
+      eventType: "measurement.rejected.0",
       schema: MeasurementRejectedSchema,
     })
     // Register prediction events
     .register({
-      flowType: "predictions",
-      eventType: "prediction.requested.v0",
+      flowType: "predictions.0",
+      eventType: "prediction.requested.0",
       schema: PredictionRequestedSchema,
     })
     .register({
-      flowType: "predictions",
-      eventType: "prediction.calculated.v0", 
+      flowType: "predictions.0",
+      eventType: "prediction.calculated.0", 
       schema: PredictionCalculatedSchema,
     })
     .register({
-      flowType: "predictions",
-      eventType: "prediction.failed.v0",
+      flowType: "predictions.0",
+      eventType: "prediction.failed.0",
       schema: PredictionFailedSchema,
     })
     // Register session events
     .register({
-      flowType: "sessions",
-      eventType: "session.started.v0",
+      flowType: "sessions.0",
+      eventType: "session.started.0",
       schema: SessionStartedSchema,
     })
     .register({
-      flowType: "sessions", 
-      eventType: "session.measurement-added.v0",
+      flowType: "sessions.0", 
+      eventType: "session.measurement-added.0",
       schema: SessionMeasurementAddedSchema,
     })
     .register({
-      flowType: "sessions",
-      eventType: "session.completed.v0",
+      flowType: "sessions.0",
+      eventType: "session.completed.0",
       schema: SessionCompletedSchema,
     })
     .register({
-      flowType: "sessions",
-      eventType: "session.exported.v0", 
+      flowType: "sessions.0",
+      eventType: "session.exported.0", 
       schema: SessionExportedSchema,
     })
 }
@@ -171,41 +172,41 @@ const safeWrite = async (eventPath: string, payload: any) => {
  * Helper functions for publishing specific events
  */
 export const publishMeasurementSubmitted = async (payload: any) => {
-  return safeWrite("measurements/measurement.submitted.v0", payload)
+  return safeWrite("measurements.0/measurement.submitted.0", payload)
 }
 
 export const publishMeasurementValidated = async (payload: any) => {
-  return safeWrite("measurements/measurement.validated.v0", payload)
+  return safeWrite("measurements.0/measurement.validated.0", payload)
 }
 
 export const publishMeasurementRejected = async (payload: any) => {
-  return safeWrite("measurements/measurement.rejected.v0", payload)
+  return safeWrite("measurements.0/measurement.rejected.0", payload)
 }
 
 export const publishPredictionRequested = async (payload: any) => {
-  return safeWrite("predictions/prediction.requested.v0", payload)
+  return safeWrite("predictions.0/prediction.requested.0", payload)
 }
 
 export const publishPredictionCalculated = async (payload: any) => {
-  return safeWrite("predictions/prediction.calculated.v0", payload)
+  return safeWrite("predictions.0/prediction.calculated.0", payload)
 }
 
 export const publishPredictionFailed = async (payload: any) => {
-  return safeWrite("predictions/prediction.failed.v0", payload)
+  return safeWrite("predictions.0/prediction.failed.0", payload)
 }
 
 export const publishSessionStarted = async (payload: any) => {
-  return safeWrite("sessions/session.started.v0", payload)
+  return safeWrite("sessions.0/session.started.0", payload)
 }
 
 export const publishSessionMeasurementAdded = async (payload: any) => {
-  return safeWrite("sessions/session.measurement-added.v0", payload)
+  return safeWrite("sessions.0/session.measurement-added.0", payload)
 }
 
 export const publishSessionCompleted = async (payload: any) => {
-  return safeWrite("sessions/session.completed.v0", payload)
+  return safeWrite("sessions.0/session.completed.0", payload)
 }
 
 export const publishSessionExported = async (payload: any) => {
-  return safeWrite("sessions/session.exported.v0", payload)
+  return safeWrite("sessions.0/session.exported.0", payload)
 } 
