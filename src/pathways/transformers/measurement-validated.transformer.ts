@@ -13,8 +13,7 @@ export async function measurementValidatedTransformer(
   const { 
     measurementId, 
     validationStatus, 
-    validationErrors,
-    validatedAt 
+    validationErrors
   } = event.payload
 
   const client = await pool.connect()

@@ -9,12 +9,11 @@ import { PredictionCalculatedSchema } from "../contracts/prediction.events"
 export async function predictionCalculatedTransformer(
   event: FlowcoreEvent<z.infer<typeof PredictionCalculatedSchema>>
 ) {
-  const { 
+    const { 
     predictionId, 
-    measurementId, 
-    results, 
-    formula,
-    calculatedAt 
+    measurementId,
+    results,
+    formula
   } = event.payload
 
   const client = await pool.connect()

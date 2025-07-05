@@ -8,12 +8,9 @@ import { PredictionRequestedSchema } from "../contracts/prediction.events"
 export async function predictionRequestedTransformer(
   event: FlowcoreEvent<z.infer<typeof PredictionRequestedSchema>>
 ) {
-  const { 
+    const { 
     predictionId, 
-    measurementId, 
-    sessionId,
-    calculationMethod,
-    requestedAt 
+    measurementId
   } = event.payload
 
   try {

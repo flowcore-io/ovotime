@@ -7,6 +7,7 @@
  * @see https://docs.flowcore.io/guides/5-minute-tutorial/5-min-tutorial/#understanding-flowcore-concepts
  */
 
+import type { FlowcoreEvent } from "@flowcore/pathways"
 import { pathways } from "./pathways"
 
 // Import transformers for when handlers are implemented
@@ -23,6 +24,26 @@ import { sessionExportedTransformer } from "./transformers/session-exported.tran
 import { sessionMeasurementAddedTransformer } from "./transformers/session-measurement-added.transformer"
 import { sessionStartedTransformer } from "./transformers/session-started.transformer"
 
+// Import event types
+import type {
+    MeasurementArchivedEvent,
+    MeasurementRejectedEvent,
+    MeasurementSubmittedEvent,
+    MeasurementValidatedEvent
+} from "./contracts/measurement.events"
+import type {
+    PredictionCalculatedEvent,
+    PredictionFailedEvent,
+    PredictionRequestedEvent
+} from "./contracts/prediction.events"
+import type {
+    SessionArchivedEvent,
+    SessionCompletedEvent,
+    SessionExportedEvent,
+    SessionMeasurementAddedEvent,
+    SessionStartedEvent
+} from "./contracts/session.events"
+
 /**
  * Register event handlers for Flowcore events
  */
@@ -30,64 +51,64 @@ if (pathways) {
   console.log("✅ Pathways available - registering event handlers")
   
   // Measurement events
-  pathways.handle("measurements.0/measurement.submitted.0", async (event: any) => {
+  pathways.handle("measurements.0/measurement.submitted.0", async (event: FlowcoreEvent<MeasurementSubmittedEvent>) => {
     console.log("🔄 Processing measurement submitted event", event.eventId)
     await measurementSubmittedTransformer(event)
   })
   
-  pathways.handle("measurements.0/measurement.validated.0", async (event: any) => {
+  pathways.handle("measurements.0/measurement.validated.0", async (event: FlowcoreEvent<MeasurementValidatedEvent>) => {
     console.log("🔄 Processing measurement validated event", event.eventId)
     await measurementValidatedTransformer(event)
   })
   
-  pathways.handle("measurements.0/measurement.rejected.0", async (event: any) => {
+  pathways.handle("measurements.0/measurement.rejected.0", async (event: FlowcoreEvent<MeasurementRejectedEvent>) => {
     console.log("🔄 Processing measurement rejected event", event.eventId)
     await measurementRejectedTransformer(event)
   })
   
-  pathways.handle("measurements.0/measurement.archived.0", async (event: any) => {
+  pathways.handle("measurements.0/measurement.archived.0", async (event: FlowcoreEvent<MeasurementArchivedEvent>) => {
     console.log("🔄 Processing measurement archived event", event.eventId)
     await measurementArchivedTransformer(event)
   })
   
   // Prediction events
-  pathways.handle("predictions.0/prediction.requested.0", async (event: any) => {
+  pathways.handle("predictions.0/prediction.requested.0", async (event: FlowcoreEvent<PredictionRequestedEvent>) => {
     console.log("🔄 Processing prediction requested event", event.eventId)
     await predictionRequestedTransformer(event)
   })
   
-  pathways.handle("predictions.0/prediction.calculated.0", async (event: any) => {
+  pathways.handle("predictions.0/prediction.calculated.0", async (event: FlowcoreEvent<PredictionCalculatedEvent>) => {
     console.log("🔄 Processing prediction calculated event", event.eventId)
     await predictionCalculatedTransformer(event)
   })
   
-  pathways.handle("predictions.0/prediction.failed.0", async (event: any) => {
+  pathways.handle("predictions.0/prediction.failed.0", async (event: FlowcoreEvent<PredictionFailedEvent>) => {
     console.log("🔄 Processing prediction failed event", event.eventId)
     await predictionFailedTransformer(event)
   })
   
   // Session events
-  pathways.handle("sessions.0/session.started.0", async (event: any) => {
+  pathways.handle("sessions.0/session.started.0", async (event: FlowcoreEvent<SessionStartedEvent>) => {
     console.log("🔄 Processing session started event", event.eventId)
     await sessionStartedTransformer(event)
   })
   
-  pathways.handle("sessions.0/session.measurement-added.0", async (event: any) => {
+  pathways.handle("sessions.0/session.measurement-added.0", async (event: FlowcoreEvent<SessionMeasurementAddedEvent>) => {
     console.log("🔄 Processing session measurement added event", event.eventId)
     await sessionMeasurementAddedTransformer(event)
   })
   
-  pathways.handle("sessions.0/session.completed.0", async (event: any) => {
+  pathways.handle("sessions.0/session.completed.0", async (event: FlowcoreEvent<SessionCompletedEvent>) => {
     console.log("🔄 Processing session completed event", event.eventId)
     await sessionCompletedTransformer(event)
   })
   
-  pathways.handle("sessions.0/session.exported.0", async (event: any) => {
+  pathways.handle("sessions.0/session.exported.0", async (event: FlowcoreEvent<SessionExportedEvent>) => {
     console.log("🔄 Processing session exported event", event.eventId)
     await sessionExportedTransformer(event)
   })
   
-  pathways.handle("sessions.0/session.archived.0", async (event: any) => {
+  pathways.handle("sessions.0/session.archived.0", async (event: FlowcoreEvent<SessionArchivedEvent>) => {
     console.log("🔄 Processing session archived event", event.eventId)
     await sessionArchivedTransformer(event)
   })

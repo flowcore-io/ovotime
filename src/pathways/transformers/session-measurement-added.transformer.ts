@@ -12,8 +12,7 @@ export async function sessionMeasurementAddedTransformer(
   const { 
     sessionId, 
     measurementId, 
-    sequenceNumber,
-    addedAt 
+    sequenceNumber
   } = event.payload
 
   const client = await pool.connect()

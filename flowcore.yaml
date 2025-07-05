@@ -14,7 +14,9 @@ dataCore:
         measurement.validated.0:
           description: "Measurement validated and accepted"
         measurement.rejected.0:
-          description: "Measurement rejected due to validation errors"          
+          description: "Measurement rejected due to validation errors"
+        measurement.archived.0:
+          description: "Measurement archived by user"
     predictions.0:
       description: "Egg hatching time predictions"
       eventTypes:
@@ -35,5 +37,7 @@ dataCore:
           description: "Research session completed"
         session.exported.0:
           description: "Session data exported"
+        session.archived.0:
+          description: "Session archived by user"
 
  

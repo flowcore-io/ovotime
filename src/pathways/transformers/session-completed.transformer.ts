@@ -13,8 +13,6 @@ export async function sessionCompletedTransformer(
     sessionId, 
     totalMeasurements,
     totalPredictions,
-    sessionSummary,
-    completionNotes,
     completedAt 
   } = event.payload
 

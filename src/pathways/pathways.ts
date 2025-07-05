@@ -26,6 +26,26 @@ import {
     SessionStartedSchema
 } from "./contracts/session.events"
 
+// Import event types
+import type {
+    MeasurementArchivedEvent,
+    MeasurementRejectedEvent,
+    MeasurementSubmittedEvent,
+    MeasurementValidatedEvent
+} from "./contracts/measurement.events"
+import type {
+    PredictionCalculatedEvent,
+    PredictionFailedEvent,
+    PredictionRequestedEvent
+} from "./contracts/prediction.events"
+import type {
+    SessionArchivedEvent,
+    SessionCompletedEvent,
+    SessionExportedEvent,
+    SessionMeasurementAddedEvent,
+    SessionStartedEvent
+} from "./contracts/session.events"
+
 /**
  * Flowcore pathways configuration
  */
@@ -44,6 +64,7 @@ const sql = postgres(pathwaysConfig.postgresUrl)
  * Initialize Flowcore pathways using the PathwaysBuilder
  * Only initialize if API key is available
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let pathways: any = null
 
 if (pathwaysConfig.apiKey) {
@@ -166,7 +187,7 @@ export const closePathways = async () => {
 /**
  * Helper function to safely write events
  */
-const safeWrite = async (eventPath: string, payload: any) => {
+const safeWrite = async (eventPath: string, payload: unknown) => {
   if (!pathways) {
     console.warn(`⚠️  Flowcore not configured - would have published: ${eventPath}`)
     return Promise.resolve({ eventId: crypto.randomUUID(), local: true })
@@ -183,50 +204,51 @@ const safeWrite = async (eventPath: string, payload: any) => {
 /**
  * Helper functions for publishing specific events
  */
-export const publishMeasurementSubmitted = async (payload: any) => {
+
+export const publishMeasurementSubmitted = async (payload: MeasurementSubmittedEvent) => {
   return safeWrite("measurements.0/measurement.submitted.0", payload)
 }
 
-export const publishMeasurementValidated = async (payload: any) => {
+export const publishMeasurementValidated = async (payload: MeasurementValidatedEvent) => {
   return safeWrite("measurements.0/measurement.validated.0", payload)
 }
 
-export const publishMeasurementRejected = async (payload: any) => {
+export const publishMeasurementRejected = async (payload: MeasurementRejectedEvent) => {
   return safeWrite("measurements.0/measurement.rejected.0", payload)
 }
 
-export const publishMeasurementArchived = async (payload: any) => {
+export const publishMeasurementArchived = async (payload: MeasurementArchivedEvent) => {
   return safeWrite("measurements.0/measurement.archived.0", payload)
 }
 
-export const publishPredictionRequested = async (payload: any) => {
+export const publishPredictionRequested = async (payload: PredictionRequestedEvent) => {
   return safeWrite("predictions.0/prediction.requested.0", payload)
 }
 
-export const publishPredictionCalculated = async (payload: any) => {
+export const publishPredictionCalculated = async (payload: PredictionCalculatedEvent) => {
   return safeWrite("predictions.0/prediction.calculated.0", payload)
 }
 
-export const publishPredictionFailed = async (payload: any) => {
+export const publishPredictionFailed = async (payload: PredictionFailedEvent) => {
   return safeWrite("predictions.0/prediction.failed.0", payload)
 }
 
-export const publishSessionStarted = async (payload: any) => {
+export const publishSessionStarted = async (payload: SessionStartedEvent) => {
   return safeWrite("sessions.0/session.started.0", payload)
 }
 
-export const publishSessionMeasurementAdded = async (payload: any) => {
+export const publishSessionMeasurementAdded = async (payload: SessionMeasurementAddedEvent) => {
   return safeWrite("sessions.0/session.measurement-added.0", payload)
 }
 
-export const publishSessionCompleted = async (payload: any) => {
+export const publishSessionCompleted = async (payload: SessionCompletedEvent) => {
   return safeWrite("sessions.0/session.completed.0", payload)
 }
 
-export const publishSessionExported = async (payload: any) => {
+export const publishSessionExported = async (payload: SessionExportedEvent) => {
   return safeWrite("sessions.0/session.exported.0", payload)
 }
 
-export const publishSessionArchived = async (payload: any) => {
+export const publishSessionArchived = async (payload: SessionArchivedEvent) => {
   return safeWrite("sessions.0/session.archived.0", payload)
 } 
