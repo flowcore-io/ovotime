@@ -1,9 +1,11 @@
 'use client'
 
 import type { SkuaCalculationResult } from '@/src/lib/calculations/skua-formulas'
+import Link from 'next/link'
 import { useCallback, useState } from 'react'
 import MeasurementForm from './components/measurement-form'
 import PredictionDisplay from './components/prediction-display'
+import TBHScatterChart from './components/tbh-scatter-chart'
 
 interface MeasurementFormData {
   measurementId: string
@@ -77,14 +79,22 @@ export default function HomePage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Ovotime</h1>
-            <p className="text-lg text-gray-600 mt-2">
-              Skua Egg Hatching Time Prediction Tool
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
-              Based on research from <em>Seabird 32-84</em> - Arctic and Great Skua studies in the Faroe Islands
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Ovotime</h1>
+              <p className="text-lg text-gray-600 mt-2">
+                Skua Egg Hatching Time Prediction Tool
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Based on research from <em>Seabird 32-84</em> - Arctic and Great Skua studies in the Faroe Islands
+              </p>
+            </div>
+            <Link
+              href="/sessions"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Manage Sessions
+            </Link>
           </div>
         </div>
       </header>
@@ -168,6 +178,22 @@ export default function HomePage() {
             )}
           </div>
         </div>
+
+        {/* Chart Section - Full Width */}
+        {submissionHistory.length > 0 && (
+          <div className="mt-8">
+            <TBHScatterChart
+              data={submissionHistory.map(entry => ({
+                measurementId: entry.measurement.measurementId,
+                speciesType: entry.measurement.speciesType,
+                measurements: entry.measurement.measurements,
+                prediction: entry.prediction,
+                submittedAt: entry.submittedAt
+              }))}
+              height={500}
+            />
+          </div>
+        )}
       </main>
 
       {/* Footer */}
