@@ -234,7 +234,7 @@ export default function PredictionDisplay({
             
             <div>
               <p className="font-medium text-gray-900 mb-1">Study Location:</p>
-              <p>Fugløy and Skúvoy, Faroe Islands</p>
+              <p>Fugloy and Skúgvoy, Faroe Islands</p>
             </div>
           </div>
           
