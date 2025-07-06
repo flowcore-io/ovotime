@@ -121,8 +121,12 @@ const SpeciesChart = ({
             dataKey="dbh" 
             name="Days Before Hatching"
             unit=" days"
-            domain={[30, 0]}
+            domain={[0, 30]}
             reversed={true}
+            ticks={[0, 5, 10, 15, 20, 25, 30]}
+            tickFormatter={(value) => `${value}`}
+            allowDataOverflow={false}
+            allowDecimals={false}
             tick={{ fontSize: 12 }}
             label={{ 
               value: 'Days Before Hatching (DBH)', 
