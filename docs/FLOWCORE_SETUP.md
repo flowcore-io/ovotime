@@ -1,16 +1,27 @@
 # Flowcore Event Sourcing Setup Guide
 
+⚠️ **CRITICAL**: Flowcore is MANDATORY for Ovotime. The application implements true event sourcing and cannot function without Flowcore.
+
 This guide walks you through setting up Ovotime with Flowcore event sourcing for deployment on Vercel, following the [official Flowcore documentation](https://docs.flowcore.io/guides/5-minute-tutorial/5-min-tutorial/#understanding-flowcore-concepts).
 
 ## 🏗️ Architecture Overview
 
-Ovotime uses **event sourcing** with Flowcore as the primary data store. The architecture follows these principles:
+Ovotime implements **TRUE EVENT SOURCING** where Flowcore is the ONLY way data enters the system:
 
+**🚨 Without Flowcore, the application CANNOT:**
+- Save any measurements
+- Create any sessions
+- Generate any predictions
+- Store any data whatsoever
+
+**✅ Event Sourcing Architecture:**
 1. **Event Store**: Flowcore stores all events as the single source of truth
 2. **Read Models**: PostgreSQL database stores derived/projected data for queries  
-3. **Event Sourcing**: All state changes are captured as events
+3. **Event Sourcing**: All state changes are captured as events (NO direct database writes)
 4. **CQRS**: Command Query Responsibility Segregation separates writes (events) from reads (projections)
 5. **Pathways**: Uses @flowcore/pathways library for event handling and processing
+
+**Data Flow:** Commands → Events (Flowcore) → Transformers → Database
 
 ## 📋 Prerequisites
 

@@ -35,7 +35,8 @@ Where:
 - **🔄 Session Management**: Track multiple measurements in research sessions
 - **📱 Responsive Design**: Works on desktop, tablet, and mobile devices
 - **💾 Data Persistence**: PostgreSQL database with Drizzle ORM
-- **🔄 Event-Driven Architecture**: Built with Flowcore Pathways for scalability
+- **🔄 Event Sourcing Architecture**: Built with Flowcore for true event-driven design
+- **📝 Complete Audit Trail**: All data changes tracked through immutable events
 
 ## 🚀 Development Environment Setup
 
@@ -73,7 +74,7 @@ Update `.env.local` with your settings:
 # Database Configuration
 DATABASE_URL=postgresql://ovotime:ovotime_dev@localhost:5432/ovotime
 
-# Flowcore Configuration (optional)
+# Flowcore Configuration (REQUIRED for event sourcing)
 FLOWCORE_TENANT=ovotime
 FLOWCORE_API_KEY=your-flowcore-api-key-here
 FLOWCORE_API_URL=https://webhook.api.flowcore.io
@@ -116,9 +117,16 @@ yarn db:studio
 # Server: postgres, Username: ovotime, Password: ovotime_dev, Database: ovotime
 ```
 
-### 4. Flowcore Integration (Required)
+### 4. Flowcore Integration (MANDATORY)
 
-Ovotime uses event sourcing architecture with Flowcore. Set up your Flowcore account:
+⚠️ **CRITICAL**: Ovotime implements TRUE EVENT SOURCING where Flowcore is absolutely required. The application cannot save any data without Flowcore as all database writes come from event processing.
+
+**Event Sourcing Architecture:**
+- 🔄 API routes publish events to Flowcore (no direct database writes)
+- 📊 Transformers process events and update PostgreSQL read models
+- 📝 Complete audit trail of all data changes through events
+
+Set up your Flowcore account:
 
 1. **Create Flowcore Account**:
    - Sign up at [Flowcore.io](https://flowcore.io)
@@ -157,12 +165,13 @@ yarn dev
 
 ### 6. Verify Setup
 
-Test the application:
+Test the event-sourced application:
 
 1. **Database**: Check that the app loads without database errors
-2. **Measurements**: Try submitting a measurement through the UI
-3. **Sessions**: Navigate to `/sessions` to view session management
-4. **Health Check**: Visit `/api/health` to verify all services
+2. **Flowcore**: Verify events are being published and processed
+3. **Measurements**: Try submitting a measurement (events → transformers → database)
+4. **Sessions**: Navigate to `/sessions` to view session management
+5. **Health Check**: Visit `/api/health` to verify all services
 
 ### Development Workflow
 

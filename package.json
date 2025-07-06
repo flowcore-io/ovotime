@@ -19,7 +19,12 @@
     "flowcore:status": "flowcore data-core list",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f"
+    "docker:logs": "docker-compose logs -f",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel",
+    "deploy:env": "vercel env pull .env.production",
+    "prod:db:test": "NODE_ENV=production npm run db:test",
+    "neon:test": "npx tsx scripts/test-neon-connection.ts"
   },
   "dependencies": {
     "@flowcore/pathways": "^0.16.3",
