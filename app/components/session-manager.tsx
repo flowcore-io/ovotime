@@ -7,7 +7,7 @@ interface SessionData {
   sessionId: string
   title: string
   researcher: string
-  location: string
+  location: string | { latitude?: number; longitude?: number; siteName?: string }
   startedAt: Date
   endedAt?: Date
   notes?: string
@@ -22,6 +22,27 @@ interface SessionManagerProps {
   currentSession?: SessionData | null
   sessionHistory?: SessionData[]
   className?: string
+}
+
+// Helper function to format location for display
+const formatLocation = (location: string | { latitude?: number; longitude?: number; siteName?: string } | null | undefined): string => {
+  if (!location) return 'Unknown location'
+  
+  if (typeof location === 'string') {
+    return location
+  }
+  
+  if (typeof location === 'object') {
+    if (location.siteName) {
+      return location.siteName
+    }
+    if (location.latitude !== undefined && location.longitude !== undefined) {
+      return `${location.latitude}, ${location.longitude}`
+    }
+    return 'Coordinates provided'
+  }
+  
+  return 'Unknown location'
 }
 
 export default function SessionManager({
@@ -159,10 +180,10 @@ export default function SessionManager({
             <div>
               <h4 className="font-medium text-gray-900">{currentSession.title}</h4>
               <p className="text-sm text-gray-600">
-                {currentSession.researcher} • {currentSession.location}
+                {currentSession.researcher} • {formatLocation(currentSession.location)}
               </p>
               <p className="text-sm text-gray-500">
-                Started: {currentSession.startedAt.toLocaleString()}
+                Started: {new Date(currentSession.startedAt).toLocaleString()}
               </p>
               <p className="text-sm text-gray-500">
                 Measurements: {currentSession.measurementCount}
@@ -296,10 +317,10 @@ export default function SessionManager({
                     <div>
                       <h5 className="font-medium text-gray-900">{session.title}</h5>
                       <p className="text-sm text-gray-600">
-                        {session.researcher} • {session.location}
+                        {session.researcher} • {formatLocation(session.location)}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {session.startedAt.toLocaleDateString()} • {session.measurementCount} measurements
+                        {new Date(session.startedAt).toLocaleDateString()} • {session.measurementCount} measurements
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

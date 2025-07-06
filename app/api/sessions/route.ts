@@ -1,8 +1,8 @@
 import { pool } from "@/src/database"
 import { generateId, sleep } from "@/src/lib/utils"
+import { publishSessionStarted } from "@/src/pathways/pathways"
 // Temporarily using mock validation for demo
 // import { SessionStartedSchema } from "@/src/pathways/contracts/session.events"
-import { pathways } from "@/src/pathways/pathways"
 import { NextRequest, NextResponse } from "next/server"
 
 /**
@@ -14,22 +14,78 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const sessionId = generateId()
     
+    // Validate required fields
+    const sessionName = body.title || body.sessionName
+    const researcherId = body.researcher || body.researcherId
+
+    if (!sessionName || sessionName.trim().length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: "Validation error",
+        message: "Session title is required"
+      }, { status: 400 })
+    }
+
+    if (!researcherId || researcherId.trim().length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: "Validation error", 
+        message: "Researcher name is required"
+      }, { status: 400 })
+    }
+
+    // Validate and prepare location data
+    let startLocation = undefined
+    if (body.location) {
+      if (typeof body.location === 'string') {
+        // Simple string location - create default coordinates
+        startLocation = {
+          latitude: 0,
+          longitude: 0,
+          siteName: body.location.trim()
+        }
+      } else if (body.location.latitude !== undefined && body.location.longitude !== undefined) {
+        // Full location object with coordinates
+        const lat = Number(body.location.latitude)
+        const lng = Number(body.location.longitude)
+        const siteName = body.location.siteName || body.location.toString()
+
+        if (isNaN(lat) || lat < -90 || lat > 90) {
+          return NextResponse.json({
+            success: false,
+            error: "Validation error",
+            message: "Invalid latitude: must be a number between -90 and 90"
+          }, { status: 400 })
+        }
+
+        if (isNaN(lng) || lng < -180 || lng > 180) {
+          return NextResponse.json({
+            success: false,
+            error: "Validation error",
+            message: "Invalid longitude: must be a number between -180 and 180"
+          }, { status: 400 })
+        }
+
+        startLocation = {
+          latitude: lat,
+          longitude: lng,
+          siteName: typeof siteName === 'string' ? siteName.trim() : siteName.toString()
+        }
+      }
+    }
+
     // Create session data with proper field mapping
     const sessionData = {
       sessionId,
-      sessionName: body.title || body.sessionName,
-      researcherId: body.researcher || body.researcherId,
-      startLocation: body.location ? {
-        latitude: body.location.latitude,
-        longitude: body.location.longitude,
-        siteName: body.location.siteName || body.location
-      } : undefined,
+      sessionName: sessionName.trim(),
+      researcherId: researcherId.trim(),
+      startLocation,
       researchGoals: body.notes || body.researchGoals,
       startedAt: new Date()
     }
 
     // Publish session started event
-    await pathways.write("session.started.0", sessionData)
+    await publishSessionStarted(sessionData)
 
     // Wait for transformer processing
     await sleep(500)

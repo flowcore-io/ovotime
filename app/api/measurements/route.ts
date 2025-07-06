@@ -3,13 +3,13 @@ import { calculateSkuaTBH } from "@/src/lib/calculations/skua-formulas"
 import { generateId, sleep } from "@/src/lib/utils"
 import { validateEggMeasurement } from "@/src/lib/validation"
 import {
-    publishMeasurementRejected,
-    publishMeasurementSubmitted,
-    publishMeasurementValidated,
-    publishPredictionCalculated,
-    publishPredictionFailed,
-    publishPredictionRequested,
-    publishSessionMeasurementAdded
+  publishMeasurementRejected,
+  publishMeasurementSubmitted,
+  publishMeasurementValidated,
+  publishPredictionCalculated,
+  publishPredictionFailed,
+  publishPredictionRequested,
+  publishSessionMeasurementAdded
 } from "@/src/pathways/pathways"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -91,18 +91,30 @@ export async function POST(request: NextRequest) {
     // Add measurement to session if sessionId is provided
     if (sessionId) {
       try {
+        // Get current measurement count for sequence number
+        const client = await pool.connect()
+        let sequenceNumber = 1
+        try {
+          const sessionResult = await client.query(
+            'SELECT measurement_count FROM sessions WHERE id = $1',
+            [sessionId]
+          )
+          if (sessionResult.rows.length > 0) {
+            sequenceNumber = sessionResult.rows[0].measurement_count + 1
+          }
+        } finally {
+          client.release()
+        }
+
         await publishSessionMeasurementAdded({
           sessionId,
           measurementId,
-          sequenceNumber: 1, // This should be calculated from session
+          sequenceNumber,
           addedAt: new Date()
         })
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('timeout')) {
-          console.warn(`⚠️  Session measurement event publish timed out for ${measurementId}, but continuing processing...`)
-        } else {
-          throw error
-        }
+      } catch (sessionError) {
+        // Log session addition error but don't fail the measurement
+        console.error('Failed to add measurement to session:', sessionError)
       }
     }
 

@@ -8,12 +8,33 @@ interface SessionData {
   sessionId: string
   title: string
   researcher: string
-  location: string
+  location: string | { latitude?: number; longitude?: number; siteName?: string }
   startedAt: Date
   endedAt?: Date
   notes?: string
   measurementCount: number
   status: 'active' | 'completed' | 'paused'
+}
+
+// Helper function to format location for display
+const formatLocation = (location: string | { latitude?: number; longitude?: number; siteName?: string } | null | undefined): string => {
+  if (!location) return 'Unknown location'
+  
+  if (typeof location === 'string') {
+    return location
+  }
+  
+  if (typeof location === 'object') {
+    if (location.siteName) {
+      return location.siteName
+    }
+    if (location.latitude !== undefined && location.longitude !== undefined) {
+      return `${location.latitude}, ${location.longitude}`
+    }
+    return 'Coordinates provided'
+  }
+  
+  return 'Unknown location'
 }
 
 export default function SessionsPage() {
@@ -176,7 +197,7 @@ export default function SessionsPage() {
                       <div>
                         <h4 className="font-medium text-gray-900">{session.title}</h4>
                         <p className="text-sm text-gray-600">
-                          {session.researcher} • {session.location}
+                          {session.researcher} • {formatLocation(session.location)}
                         </p>
                       </div>
                     </div>
@@ -185,7 +206,7 @@ export default function SessionsPage() {
                         {session.measurementCount} measurements
                       </div>
                       <div className="text-sm text-gray-500">
-                        {session.startedAt.toLocaleDateString()}
+                        {new Date(session.startedAt).toLocaleDateString()}
                       </div>
                     </div>
                   </div>

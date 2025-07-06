@@ -55,6 +55,39 @@ interface PersistedMeasurement {
   archivedAt?: Date
 }
 
+interface SessionData {
+  sessionId: string
+  title: string
+  researcher: string
+  location: string | { latitude?: number; longitude?: number; siteName?: string }
+  startedAt: Date
+  endedAt?: Date
+  notes?: string
+  measurementCount: number
+  status: 'active' | 'completed' | 'paused'
+}
+
+// Helper function to format location for display
+const formatLocation = (location: string | { latitude?: number; longitude?: number; siteName?: string } | null | undefined): string => {
+  if (!location) return 'Unknown location'
+  
+  if (typeof location === 'string') {
+    return location
+  }
+  
+  if (typeof location === 'object') {
+    if (location.siteName) {
+      return location.siteName
+    }
+    if (location.latitude !== undefined && location.longitude !== undefined) {
+      return `${location.latitude}, ${location.longitude}`
+    }
+    return 'Coordinates provided'
+  }
+  
+  return 'Unknown location'
+}
+
 export default function HomePage() {
   const [currentPrediction, setCurrentPrediction] = useState<SkuaCalculationResult | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -66,33 +99,59 @@ export default function HomePage() {
   }>>([])
   const [persistedMeasurements, setPersistedMeasurements] = useState<PersistedMeasurement[]>([])
   const [showArchived, setShowArchived] = useState(false)
+  const [currentSession, setCurrentSession] = useState<SessionData | null>(null)
 
-  // Load measurements from API on component mount
+  // DEBUG: Log currentSession changes
   useEffect(() => {
-    const loadMeasurements = async () => {
+    if (currentSession) {
+      console.log('🔍 DEBUG: currentSession data:', currentSession)
+      console.log('🔍 DEBUG: sessionId being passed to MeasurementForm:', currentSession.sessionId)
+    }
+  }, [currentSession])
+
+  // Load measurements and current session from API on component mount
+  useEffect(() => {
+    const loadData = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`/api/measurements?includeArchived=${showArchived}&limit=100`)
-        const result = await response.json()
         
-        if (result.success) {
+        // Load measurements
+        const measurementsResponse = await fetch(`/api/measurements?includeArchived=${showArchived}&limit=100`)
+        const measurementsResult = await measurementsResponse.json()
+        
+        if (measurementsResult.success) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setPersistedMeasurements(result.data.measurements.map((m: any) => ({
+          setPersistedMeasurements(measurementsResult.data.measurements.map((m: any) => ({
             ...m,
             submittedAt: new Date(m.submittedAt),
             archivedAt: m.archivedAt ? new Date(m.archivedAt) : undefined
           })))
         } else {
-          console.error('Failed to load measurements:', result.error)
+          console.error('Failed to load measurements:', measurementsResult.error)
+        }
+
+        // Load current active session
+        const sessionsResponse = await fetch('/api/sessions')
+        const sessionsResult = await sessionsResponse.json()
+        
+        if (sessionsResult.success && sessionsResult.data.sessions) {
+          const activeSession = sessionsResult.data.sessions.find((s: SessionData) => s.status === 'active')
+          if (activeSession) {
+            setCurrentSession({
+              ...activeSession,
+              startedAt: new Date(activeSession.startedAt),
+              endedAt: activeSession.endedAt ? new Date(activeSession.endedAt) : undefined
+            })
+          }
         }
       } catch (error) {
-        console.error('Failed to load measurements:', error)
+        console.error('Failed to load data:', error)
       } finally {
         setIsLoading(false)
       }
     }
 
-    loadMeasurements()
+    loadData()
   }, [showArchived])
 
   const handleMeasurementSubmit = useCallback(async (measurementData: MeasurementFormData) => {
@@ -138,6 +197,23 @@ export default function HomePage() {
             submittedAt: new Date(m.submittedAt),
             archivedAt: m.archivedAt ? new Date(m.archivedAt) : undefined
           })))
+        }
+
+        // Reload current session to update measurement count
+        if (currentSession) {
+          const sessionsResponse = await fetch('/api/sessions')
+          const sessionsResult = await sessionsResponse.json()
+          
+          if (sessionsResult.success && sessionsResult.data.sessions) {
+            const activeSession = sessionsResult.data.sessions.find((s: SessionData) => s.status === 'active')
+            if (activeSession) {
+              setCurrentSession({
+                ...activeSession,
+                startedAt: new Date(activeSession.startedAt),
+                endedAt: activeSession.endedAt ? new Date(activeSession.endedAt) : undefined
+              })
+            }
+          }
         }
       } else {
         console.error('Submission failed:', result.error)
@@ -214,7 +290,7 @@ export default function HomePage() {
       archived: false,
       location: entry.measurement.location,
       researcherNotes: entry.measurement.researcherNotes,
-      sessionName: entry.measurement.sessionId ? 'Current Session' : undefined,
+      sessionName: entry.measurement.sessionId && currentSession ? `${currentSession.title} (${formatLocation(currentSession.location)})` : undefined,
       archivedBy: undefined,
       archiveReason: undefined,
       archivedAt: undefined
@@ -288,9 +364,34 @@ export default function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Measurement Form */}
           <div className="space-y-6">
+            {currentSession && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-blue-900">📝 Active Session</h4>
+                    <p className="text-sm text-blue-700">
+                      {currentSession.title} • {currentSession.researcher}
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      📍 {formatLocation(currentSession.location)}
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      {currentSession.measurementCount} measurements recorded
+                    </p>
+                  </div>
+                  <Link
+                    href="/sessions"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Manage
+                  </Link>
+                </div>
+              </div>
+            )}
             <MeasurementForm
               onSubmit={handleMeasurementSubmit}
               onCalculationUpdate={handleCalculationUpdate}
+              sessionId={currentSession?.sessionId}
               className="sticky top-8"
             />
           </div>
@@ -384,7 +485,7 @@ export default function HomePage() {
                       
                       {entry.sessionName && (
                         <p className="text-xs text-gray-500 mt-2">
-                          📝 {entry.sessionName}
+                          �� {entry.sessionName}
                         </p>
                       )}
                       

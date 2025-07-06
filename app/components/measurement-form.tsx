@@ -135,6 +135,14 @@ export default function MeasurementForm({
     return () => clearTimeout(timeoutId)
   }, [formData.measurements, formData.speciesType, onCalculationUpdate, formData])
 
+  // Update sessionId in formData when prop changes
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      sessionId
+    }))
+  }, [sessionId])
+
   // Form validation
   useEffect(() => {
     const validateForm = () => {

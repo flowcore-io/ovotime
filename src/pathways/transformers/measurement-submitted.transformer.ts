@@ -59,18 +59,6 @@ export async function measurementSubmittedTransformer(
 
     console.log(`✅ Measurement ${measurementId} submitted successfully`)
 
-    // If part of a session, increment measurement count
-    if (sessionId) {
-      await client.query(`
-        UPDATE sessions 
-        SET measurement_count = measurement_count + 1, 
-            updated_at = NOW() 
-        WHERE id = $1
-      `, [sessionId])
-      
-      console.log(`✅ Updated measurement count for session ${sessionId}`)
-    }
-
   } catch (error) {
     console.error(`❌ Failed to process measurement submission for ${measurementId}:`, error)
     throw error
