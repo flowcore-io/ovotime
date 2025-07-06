@@ -23,7 +23,6 @@
   },
   "dependencies": {
     "@flowcore/pathways": "^0.16.3",
-    "@neondatabase/serverless": "^1.0.1",
     "next": "15.3.5",
     "pg": "^8.16.3",
     "react": "^19.0.0",

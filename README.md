@@ -269,7 +269,7 @@ echo $DATABASE_URL
 ### Backend
 - **Next.js API Routes** - Serverless backend functions
 - **Drizzle ORM** - Type-safe database operations
-- **PostgreSQL** - Primary database (via Neon)
+- **PostgreSQL** - Primary database with connection pooling
 - **Zod** - Runtime type validation
 
 ### Architecture

@@ -36,14 +36,7 @@ vercel postgres create ovotime-db
 vercel env pull .env.local
 ```
 
-### Option 2: Neon (Serverless PostgreSQL)
-
-1. Go to [neon.tech](https://neon.tech)
-2. Create a new project
-3. Copy the connection string
-4. Add to environment variables
-
-### Option 3: Supabase
+### Option 2: Supabase
 
 1. Go to [supabase.com](https://supabase.com)
 2. Create a new project
