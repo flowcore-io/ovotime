@@ -101,14 +101,6 @@ export default function HomePage() {
   const [showArchived, setShowArchived] = useState(false)
   const [currentSession, setCurrentSession] = useState<SessionData | null>(null)
 
-  // DEBUG: Log currentSession changes
-  useEffect(() => {
-    if (currentSession) {
-      console.log('🔍 DEBUG: currentSession data:', currentSession)
-      console.log('🔍 DEBUG: sessionId being passed to MeasurementForm:', currentSession.sessionId)
-    }
-  }, [currentSession])
-
   // Load measurements and current session from API on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -226,7 +218,7 @@ export default function HomePage() {
     } finally {
       setIsSubmitting(false)
     }
-  }, [showArchived])
+  }, [showArchived, currentSession])
 
   const handleCalculationUpdate = useCallback((prediction: SkuaCalculationResult | null) => {
     setCurrentPrediction(prediction)

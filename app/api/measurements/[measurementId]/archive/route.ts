@@ -9,10 +9,10 @@ import { NextRequest, NextResponse } from "next/server"
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { measurementId: string } }
+  { params }: { params: Promise<{ measurementId: string }> }
 ) {
   try {
-    const { measurementId } = params
+    const { measurementId } = await params
     const body = await request.json()
     const { secretWord, archivedBy, archiveReason } = body
 
