@@ -109,17 +109,25 @@ export default function HomePage() {
 
       const result = await response.json()
 
-      if (result.success && result.data.prediction) {
-        const newEntry = {
-          measurement: measurementData,
-          prediction: result.data.prediction,
-          submittedAt: new Date()
+      if (result.success) {
+        // Handle successful submission (including timeouts with warnings)
+        if (result.warning && !result.data?.prediction) {
+          // Timeout case - show helpful message
+          console.warn('⚠️ Submission completed with timeout:', result.message)
+          alert(`✅ ${result.message}\n\nNote: ${result.details}`)
+        } else if (result.data?.prediction) {
+          // Normal success case with prediction
+          const newEntry = {
+            measurement: measurementData,
+            prediction: result.data.prediction,
+            submittedAt: new Date()
+          }
+          
+          setSubmissionHistory(prev => [newEntry, ...prev])
+          setCurrentPrediction(result.data.prediction)
         }
         
-        setSubmissionHistory(prev => [newEntry, ...prev])
-        setCurrentPrediction(result.data.prediction)
-        
-        // Reload measurements to get the persisted data
+        // Always reload measurements for both success and timeout cases
         const measurementsResponse = await fetch(`/api/measurements?includeArchived=${showArchived}&limit=100`)
         const measurementsResult = await measurementsResponse.json()
         
@@ -133,7 +141,7 @@ export default function HomePage() {
         }
       } else {
         console.error('Submission failed:', result.error)
-        // TODO: Show error toast/notification
+        alert(`❌ Submission failed: ${result.message || result.error}`)
       }
 
     } catch (error) {
