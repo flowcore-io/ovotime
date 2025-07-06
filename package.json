@@ -12,7 +12,7 @@
     "test:coverage": "jest --coverage",
     "db:init": "npx tsx scripts/db-init.ts",
     "db:test": "npx tsx scripts/db-test.ts",
-    "flowcore:setup": "flowcore data-core apply -f flowcore.yaml",
+    "flowcore:setup": "flowcore apply -f flowcore.yaml",
     "flowcore:dev": "flowcore scenario local -f flowcore.local.development.yaml -s now -e http://localhost:3000/api/flowcore/transformer -H \"X-Secret: $OVOTIME_API_KEY\"",
     "flowcore:dev:backlog": "flowcore scenario local --pageSize 10 --timeout 30000 -f flowcore.local.development.yaml -e http://localhost:3000/api/flowcore/transformer -H \"X-Secret: $OVOTIME_API_KEY\"",
     "flowcore:validate": "flowcore data-core validate -f flowcore.yaml",

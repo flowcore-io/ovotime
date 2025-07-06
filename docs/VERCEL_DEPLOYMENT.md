@@ -158,6 +158,55 @@ curl https://your-app.vercel.app/api/health
 curl https://your-app.vercel.app/api/flowcore/sync
 ```
 
+## ⚡ Serverless Function Behavior
+
+### What Happens When Flowcore Calls Your Transformer
+
+When Flowcore sends events to your transformer endpoint (`/api/flowcore/transformer`), here's the serverless flow:
+
+**🥶 Cold Start Process** (if function is sleeping):
+1. **Request arrives** → Vercel detects incoming POST from Flowcore
+2. **Boot runtime** → Initialize Node.js and load Next.js app (~1-2 seconds)
+3. **Load dependencies** → Import pathways, handlers, database pool
+4. **Initialize connections** → Create PostgreSQL connection pool
+5. **Process event** → Run transformer logic and update database
+6. **Return response** → Send "OK" back to Flowcore
+
+**🔥 Warm Function** (if recently used):
+- Function is already running → Direct processing (~50-200ms)
+- Connection pool already initialized
+- Much faster response times
+
+### Timeline Expectations
+- **Cold Start**: 1-3 seconds (initial delay)
+- **Warm Function**: 50-200ms (normal operation)
+- **Database Query**: 10-100ms per operation
+- **Total**: Usually well under Flowcore's webhook timeout (10-30 seconds)
+
+### Optimization Strategies
+
+**🚀 Keep Functions Warm** (optional):
+```bash
+# Add to package.json scripts
+"keep-warm": "curl https://your-app.vercel.app/api/health"
+
+# Or use Vercel Cron (paid plans)
+# vercel.json:
+{
+  "crons": [
+    {
+      "path": "/api/health",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
+```
+
+**📊 Database Pool Configuration** (already optimized):
+- 30-second connection timeout (handles cold starts)
+- 20-second idle timeout (prevents stale connections)
+- Max 10 connections per function instance
+
 ## 🔍 Monitoring & Troubleshooting
 
 ### Vercel Logs

@@ -39,5 +39,68 @@ dataCore:
           description: "Session data exported"
         session.archived.0:
           description: "Session archived by user"
-
- 
+scenario: 
+  name: ovotime-research-system
+  description: >-
+    This scenario handles the ovotime research system with automated transaction processing
+  transformers:
+    measurements:
+      description: Measurement entity transformer
+      dataCore: ovotime-research-data
+      flowType: measurements.0
+      events:
+        - measurement.submitted.0
+        - measurement.validated.0
+        - measurement.rejected.0
+        - measurement.archived.0
+      parameters:
+        - name: PROXY_ENDPOINT
+          type: manual
+          value: >-
+            https://ovotime.vercel.app/api/flowcore/transformer
+        - name: PROXY_HEADER_SECRET 
+          type: secret
+          value: ovotime-proxy-header-secret
+      blueprint:
+        artifactUrl: >-
+          https://flowcore-public-runtimes.s3.eu-west-1.amazonaws.com/transformer-proxy-1.4.1.zip
+    predictions:
+      description: Prediction entity transformer
+      dataCore: ovotime-research-data
+      flowType: predictions.0
+      events:
+        - prediction.requested.0
+        - prediction.calculated.0
+        - prediction.failed.0
+      parameters:
+        - name: PROXY_ENDPOINT
+          type: manual
+          value: >-
+            https://ovotime.vercel.app/api/flowcore/transformer
+        - name: PROXY_HEADER_SECRET 
+          type: secret
+          value: ovotime-proxy-header-secret
+      blueprint:
+        artifactUrl: >-
+          https://flowcore-public-runtimes.s3.eu-west-1.amazonaws.com/transformer-proxy-1.4.1.zip
+    sessions:
+      description: Session entity transformer
+      dataCore: ovotime-research-data
+      flowType: sessions.0
+      events:
+        - session.started.0
+        - session.measurement-added.0
+        - session.completed.0
+        - session.exported.0
+        - session.archived.0
+      parameters:
+        - name: PROXY_ENDPOINT
+          type: manual
+          value: >-
+            https://ovotime.vercel.app/api/flowcore/transformer
+        - name: PROXY_HEADER_SECRET 
+          type: secret
+          value: ovotime-proxy-header-secret
+      blueprint:
+        artifactUrl: >-
+          https://flowcore-public-runtimes.s3.eu-west-1.amazonaws.com/transformer-proxy-1.4.1.zip
