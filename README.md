@@ -88,7 +88,7 @@ Update `.env.local` with your settings:
 # Database Configuration
 DATABASE_URL=postgresql://ovotime:ovotime_dev@localhost:5432/ovotime
 
-# Flowcore Configuration (REQUIRED for event sourcing)
+# Flowcore Configuration (required for event sourcing)
 FLOWCORE_TENANT=ovotime
 FLOWCORE_API_KEY=your-flowcore-api-key-here
 FLOWCORE_API_URL=https://webhook.api.flowcore.io
@@ -131,14 +131,15 @@ yarn db:studio
 # Server: postgres, Username: ovotime, Password: ovotime_dev, Database: ovotime
 ```
 
-### 4. Flowcore Integration (MANDATORY)
+### 4. Flowcore Integration (Required)
 
-⚠️ **CRITICAL**: Ovotime implements TRUE EVENT SOURCING where Flowcore is absolutely required. The application cannot save any data without Flowcore as all database writes come from event processing.
+**Event Sourcing Architecture**: OvoTime implements true event sourcing where Flowcore handles all data persistence. The application uses an event-driven architecture where:
 
-**Event Sourcing Architecture:**
 - 🔄 API routes publish events to Flowcore (no direct database writes)
 - 📊 Transformers process events and update PostgreSQL read models
 - 📝 Complete audit trail of all data changes through events
+
+**Note**: Flowcore is required for the application to function, as all database writes are handled through event processing.
 
 Set up your Flowcore account:
 
@@ -262,7 +263,7 @@ yarn docker:logs postgres
 yarn flowcore:validate
 
 # Verify API key is set
-echo $OVOTIME_API_KEY
+echo $FLOWCORE_API_KEY
 
 # Test if data core exists
 yarn flowcore:status
@@ -327,6 +328,68 @@ POST /api/predictions
 // Request prediction calculations
 ```
 
+## 🧪 Testing
+
+OvoTime includes a comprehensive test suite to ensure calculation accuracy and reliability for scientific research.
+
+### Test Coverage
+
+The application includes extensive testing for all calculation functions:
+
+- **Unit Tests**: 370+ lines of tests covering all formula calculations
+- **Formula Accuracy**: Validates quadratic equation solving for both species
+- **Sample Data Validation**: Tests against realistic field measurements
+- **Error Handling**: Comprehensive validation of edge cases and invalid inputs
+- **Confidence Scoring**: Tests for prediction reliability algorithms
+
+### Running Tests
+
+```bash
+# Run all tests
+yarn test
+
+# Run tests in watch mode during development
+yarn test:watch
+
+# Run tests with coverage report
+yarn test:coverage
+
+# Test specific calculation functions
+yarn test src/lib/calculations
+```
+
+### Test Data
+
+The test suite includes sample data based on realistic Skua egg measurements:
+
+```typescript
+// Example test data for Arctic Skua
+{
+  length: 72.3,      // mm
+  breadth: 50.2,     // mm  
+  mass: 91.89,       // g
+  kv: 0.507,         // standard constant
+  expectedDensity: 0.9972 // g/cm³
+}
+```
+
+### Formula Validation
+
+Tests verify that:
+- Calculated DBH values fall within expected ranges (0-35 days)
+- Reverse calculations match original density values
+- Both quadratic equation roots are handled correctly
+- Species-specific formulas produce different results
+- Confidence scores reflect measurement quality
+
+### Scientific Accuracy
+
+The test suite includes validation against peer-reviewed research:
+- Formula coefficients match published research
+- Calculation results are mathematically consistent
+- Error handling prevents invalid scientific predictions
+- Edge cases are properly identified and handled
+
 ## 🤝 Contributing
 
 We welcome contributions from the scientific community and developers! This project aims to support field research and ornithological studies worldwide.
@@ -385,10 +448,10 @@ When contributing scientific formulas or calculations:
 interface MeasurementData {
   speciesType: 'arctic' | 'great'
   measurements: {
-    length: number    // mm (10-100)
-    breadth: number   // mm (10-80)  
-    mass: number      // g (1-200)
-    kv: number        // 0.1-1.0, default 0.507
+    length: number    // mm (60-85 for Skua species)
+    breadth: number   // mm (40-60 for Skua species)
+    mass: number      // g (70-120 for Skua species)
+    kv: number        // typically 0.507 for Skua species
   }
   location?: {
     latitude?: number     // -90 to 90
@@ -437,7 +500,7 @@ yarn test src/lib/calculations
 
 ## 📚 Scientific References
 
-1. **"Seabird 32-84"** - Primary research paper for formula development
+1. **Aldará, J., Hammer, S., Thorup, K., & Snell, K. R. S.** (2024). [Determining hatch dates for skuas: an egg density calibration curve](https://www.seabirdgroup.org.uk/journals/seabird-32/seabird-32-84.pdf). *Seabird*, 32, 84-95.
 2. **Faroe Islands Skua Studies** - Baseline data and validation research
 3. **Arctic Skua (*Stercorarius parasiticus*)** - Species-specific research
 4. **Great Skua (*Stercorarius skua*)** - Species-specific research

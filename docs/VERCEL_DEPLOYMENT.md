@@ -4,13 +4,13 @@ Complete guide for deploying Ovotime to Vercel with Neon PostgreSQL database.
 
 ## 🎯 Quick Setup Overview
 
-1. **Flowcore**: Set up Flowcore tenant and API key (REQUIRED)
+1. **Flowcore**: Set up Flowcore tenant and API key (required)
 2. **Database**: Set up Neon PostgreSQL (free tier) 
 3. **Deploy**: Deploy to Vercel with environment variables
 4. **Initialize**: Run database setup on first deployment
 5. **Verify**: Test event-sourced functionality
 
-## 🔄 Step 1: Set Up Flowcore (REQUIRED)
+## 🔄 Step 1: Set Up Flowcore (Required)
 
 ### Create Flowcore Account
 1. Sign up at [flowcore.io](https://flowcore.io)
@@ -32,7 +32,7 @@ flowcore data-core apply -f flowcore.yaml
 flowcore auth new key --tenant ovotime ovotime-production-key
 ```
 
-**⚠️ Critical:** Save your API key - you'll need it for `FLOWCORE_API_KEY`.
+**Note:** Save your API key - you'll need it for `FLOWCORE_API_KEY`.
 
 ## 📊 Step 2: Set Up Neon Database
 
@@ -66,7 +66,7 @@ Set these in your Vercel project settings:
 # Database
 DATABASE_URL=your-neon-connection-string-here
 
-# Flowcore (REQUIRED for event sourcing)
+# Flowcore (required for event sourcing)
 FLOWCORE_TENANT=ovotime
 FLOWCORE_API_KEY=your-flowcore-api-key
 FLOWCORE_API_URL=https://webhook.api.flowcore.io
@@ -94,29 +94,29 @@ vercel
 
 Your database will be automatically initialized on first request thanks to your existing `initializeDatabase()` function in `src/lib/startup.ts`.
 
-### 🚨 **CRITICAL: Flowcore Configuration is REQUIRED**
+### 🔧 **Flowcore Configuration**
 
-**Ovotime implements TRUE EVENT SOURCING where Flowcore is MANDATORY.**
+**Event Sourcing Architecture**: OvoTime implements true event sourcing where Flowcore handles all data persistence.
 
-**⚠️ Application WILL NOT WORK without Flowcore because:**
-- API routes ONLY publish events to Flowcore
+**Application will not function without Flowcore because:**
+- API routes publish events to Flowcore
 - Transformers process events and write to database
-- NO direct database writes from API routes
+- No direct database writes from API routes
 - All database state derives from events
 
-**🏗️ Event-Sourced Architecture:**
+**Event-Sourced Architecture:**
 1. **Commands** → API routes publish events to Flowcore
 2. **Events** → Transformers process events and update database  
 3. **Queries** → Read from database (read models)
 
-**✅ You MUST configure Flowcore:**
+**Flowcore configuration:**
 ```env
 FLOWCORE_TENANT=ovotime
 FLOWCORE_API_KEY=your-flowcore-api-key
 FLOWCORE_API_URL=https://webhook.api.flowcore.io
 ```
 
-**❌ Without Flowcore:** Application cannot save any data - events have nowhere to go and transformers won't run.
+**Note**: Without Flowcore, the application cannot save any data as events have nowhere to go and transformers won't run.
 
 ### Verify Database Setup
 After deployment, visit your app's health endpoint:
