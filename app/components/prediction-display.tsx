@@ -62,9 +62,6 @@ function ConfidenceIndicator({ confidence }: { confidence: number }) {
 }
 
 function CalculationBreakdown({ prediction }: { prediction: SkuaCalculationResult }) {
-  // Get the formula coefficients for the species
-  const coefficients = prediction.formula.coefficients
-  
   return (
     <div className="space-y-4">
       <h4 className="font-medium text-gray-900">Calculation Breakdown</h4>

@@ -3,13 +3,14 @@
  * Based on species-specific formulas from Figure 1 with quadratic equation solving
  */
 
+import { SpeciesType } from '@/src/types'
 import {
-    calculateEggDensity,
-    calculateEggVolume,
-    calculateSkuaTBH,
-    calculateTBH,
-    validateCalculationInput,
-    type SkuaCalculationInput
+  calculateEggDensity,
+  calculateEggVolume,
+  calculateSkuaTBH,
+  calculateTBH,
+  validateCalculationInput,
+  type SkuaCalculationInput
 } from '../skua-formulas'
 
 describe('Skua Formula Calculations', () => {
@@ -181,7 +182,7 @@ describe('Skua Formula Calculations', () => {
     })
 
     it('should throw error for invalid species type', () => {
-      expect(() => calculateTBH(0.95, 'invalid' as any)).toThrow(/Unknown species type/)
+      expect(() => calculateTBH(0.95, 'invalid' as SpeciesType)).toThrow(/Unknown species type/)
     })
 
     it('should throw error for density values that result in invalid solutions', () => {
