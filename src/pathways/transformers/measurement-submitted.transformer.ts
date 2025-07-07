@@ -35,12 +35,13 @@ export async function measurementSubmittedTransformer(
         latitude, 
         longitude, 
         site_name, 
+        observation_date_time,
         researcher_notes, 
         submitted_at, 
         created_at, 
         updated_at
       ) VALUES (
-        $1, $2, $3::species_type, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
+        $1, $2, $3::species_type, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW()
       )
     `, [
       measurementId,
@@ -53,6 +54,7 @@ export async function measurementSubmittedTransformer(
       location?.latitude || null,
       location?.longitude || null,
       location?.siteName || null,
+      location?.observationDateTime || null,
       researcherNotes || null,
       timestamp
     ])

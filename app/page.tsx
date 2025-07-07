@@ -1,6 +1,8 @@
 'use client'
 
 import type { SkuaCalculationResult } from '@/src/lib/calculations/skua-formulas'
+import { formatDateInternational, formatDateTimeInternational, formatTimeInternational } from '@/src/lib/utils'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import MeasurementForm from './components/measurement-form'
@@ -21,6 +23,7 @@ interface MeasurementFormData {
     latitude?: number
     longitude?: number
     siteName?: string
+    observationDateTime?: string
   }
   researcherNotes?: string
 }
@@ -41,6 +44,7 @@ interface PersistedMeasurement {
     latitude?: number
     longitude?: number
     siteName?: string
+    observationDateTime?: string
   }
   researcherNotes?: string
   prediction?: SkuaCalculationResult & {
@@ -162,10 +166,39 @@ export default function HomePage() {
 
       if (result.success) {
         // Handle successful submission (including timeouts with warnings)
-        if (result.warning && !result.data?.prediction) {
-          // Timeout case - show helpful message
-          console.warn('⚠️ Submission completed with timeout:', result.message)
-          alert(`✅ ${result.message}\n\nNote: ${result.details}`)
+        if (result.warning) {
+          // Warning case - show helpful message with better formatting
+          console.warn('⚠️ Submission completed with warning:', result.message)
+          
+          // Show more user-friendly notification
+          const notificationMessage = `
+🔄 ${result.message}
+
+ℹ️ ${result.details}
+
+💡 ${result.troubleshooting}
+
+The measurement has been submitted successfully. It may take a few moments to appear in the list due to system initialization.
+          `.trim()
+          
+          alert(notificationMessage)
+          
+          // Add a slight delay before reloading to give event processing time
+          setTimeout(async () => {
+            // Reload measurements after delay
+            const measurementsResponse = await fetch(`/api/measurements?includeArchived=${showArchived}&limit=100`)
+            const measurementsResult = await measurementsResponse.json()
+            
+            if (measurementsResult.success) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              setPersistedMeasurements(measurementsResult.data.measurements.map((m: any) => ({
+                ...m,
+                submittedAt: new Date(m.submittedAt),
+                archivedAt: m.archivedAt ? new Date(m.archivedAt) : undefined
+              })))
+            }
+          }, 2000) // 2 second delay for event processing
+          
         } else if (result.data?.prediction) {
           // Normal success case with prediction
           const newEntry = {
@@ -178,17 +211,19 @@ export default function HomePage() {
           setCurrentPrediction(result.data.prediction)
         }
         
-        // Always reload measurements for both success and timeout cases
-        const measurementsResponse = await fetch(`/api/measurements?includeArchived=${showArchived}&limit=100`)
-        const measurementsResult = await measurementsResponse.json()
-        
-        if (measurementsResult.success) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setPersistedMeasurements(measurementsResult.data.measurements.map((m: any) => ({
-            ...m,
-            submittedAt: new Date(m.submittedAt),
-            archivedAt: m.archivedAt ? new Date(m.archivedAt) : undefined
-          })))
+        // Always reload measurements for both success and timeout cases (unless it's a warning case with delayed reload)
+        if (!result.warning) {
+          const measurementsResponse = await fetch(`/api/measurements?includeArchived=${showArchived}&limit=100`)
+          const measurementsResult = await measurementsResponse.json()
+          
+          if (measurementsResult.success) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setPersistedMeasurements(measurementsResult.data.measurements.map((m: any) => ({
+              ...m,
+              submittedAt: new Date(m.submittedAt),
+              archivedAt: m.archivedAt ? new Date(m.archivedAt) : undefined
+            })))
+          }
         }
 
         // Reload current session to update measurement count
@@ -326,14 +361,23 @@ export default function HomePage() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Ovotime</h1>
-              <p className="text-gray-600 mt-1">Arctic & Great Skua Egg Hatching Prediction</p>
+            <div className="flex items-center gap-4">
+              <Image
+                src="/logo.svg"
+                alt="Ovotime Logo"
+                width={48}
+                height={48}
+                className="flex-shrink-0"
+              />
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Ovotime</h1>
+                <p className="text-gray-600 mt-1">Arctic & Great Skua Egg Hatching Prediction</p>
+              </div>
             </div>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
               <button
                 onClick={() => setShowArchived(!showArchived)}
-                className={`px-4 py-2 rounded-md transition-colors ${
+                className={`px-4 py-2 rounded-md transition-colors text-sm sm:text-base ${
                   showArchived 
                     ? 'bg-gray-600 text-white hover:bg-gray-700' 
                     : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
@@ -343,7 +387,7 @@ export default function HomePage() {
               </button>
               <Link
                 href="/sessions"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm sm:text-base text-center"
               >
                 Manage Sessions
               </Link>
@@ -399,10 +443,38 @@ export default function HomePage() {
             {/* Measurement History */}
             {(isLoading || allMeasurements.length > 0) && (
               <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Recent Measurements ({allMeasurements.length})
-                  {isLoading && <span className="text-sm text-gray-500 ml-2">Loading...</span>}
-                </h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Recent Measurements ({allMeasurements.length})
+                    {isLoading && <span className="text-sm text-gray-500 ml-2">Loading...</span>}
+                  </h3>
+                  <button
+                    onClick={async () => {
+                      setIsLoading(true)
+                      try {
+                        const measurementsResponse = await fetch(`/api/measurements?includeArchived=${showArchived}&limit=100`)
+                        const measurementsResult = await measurementsResponse.json()
+                        
+                        if (measurementsResult.success) {
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          setPersistedMeasurements(measurementsResult.data.measurements.map((m: any) => ({
+                            ...m,
+                            submittedAt: new Date(m.submittedAt),
+                            archivedAt: m.archivedAt ? new Date(m.archivedAt) : undefined
+                          })))
+                        }
+                      } catch (error) {
+                        console.error('Failed to refresh measurements:', error)
+                      } finally {
+                        setIsLoading(false)
+                      }
+                    }}
+                    disabled={isLoading}
+                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isLoading ? 'Refreshing...' : 'Refresh'}
+                  </button>
+                </div>
                 
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   {isLoading ? (
@@ -440,7 +512,7 @@ export default function HomePage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-gray-500">
-                            {entry.submittedAt.toLocaleTimeString()}
+                            {formatTimeInternational(entry.submittedAt)}
                           </span>
                           {!entry.archived && (
                             <button
@@ -477,7 +549,7 @@ export default function HomePage() {
                       
                       {entry.sessionName && (
                         <p className="text-xs text-gray-500 mt-2">
-                          �� {entry.sessionName}
+                          📝 {entry.sessionName}
                         </p>
                       )}
                       
@@ -487,9 +559,15 @@ export default function HomePage() {
                         </p>
                       )}
 
+                      {entry.location?.observationDateTime && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          🕐 Observed: {formatDateTimeInternational(new Date(entry.location.observationDateTime))}
+                        </p>
+                      )}
+
                       {entry.archived && entry.archivedBy && (
                         <p className="text-xs text-gray-500 mt-1">
-                          🗃️ Archived by {entry.archivedBy} {entry.archivedAt && `on ${entry.archivedAt.toLocaleDateString()}`}
+                          🗃️ Archived by {entry.archivedBy} {entry.archivedAt && `on ${formatDateInternational(entry.archivedAt)}`}
                           {entry.archiveReason && ` - ${entry.archiveReason}`}
                         </p>
                       )}
@@ -511,6 +589,7 @@ export default function HomePage() {
                   measurementId: entry.measurementId,
                   speciesType: entry.speciesType,
                   measurements: entry.measurements,
+                  location: entry.location,
                   prediction: entry.prediction!,
                   submittedAt: entry.submittedAt
                 }))
@@ -525,7 +604,7 @@ export default function HomePage() {
       <footer className="bg-white border-t border-gray-200 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600">
-            <p>© 2024 Ovotime - Scientific Skua Egg Research Tool</p>
+            <p>© 2025 Ovotime - Scientific Skua Egg Research Tool</p>
             <p className="text-sm mt-2">
               Accurate hatching time predictions for Arctic and Great Skua species
             </p>

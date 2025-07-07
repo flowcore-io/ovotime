@@ -93,10 +93,19 @@ function CalculationBreakdown({ prediction }: { prediction: SkuaCalculationResul
       </div>
       
       <div className="bg-gray-50 p-3 rounded-lg">
-        <p className="text-xs text-gray-600 mb-2">Formula:</p>
+        <p className="text-xs text-gray-600 mb-2">Species-Specific Formula (Figure 1):</p>
         <code className="text-xs font-mono text-gray-800 break-all">
-          TBH = (-0.2412 + √(0.05818 + 0.3175(0.8746 - DE))) / -0.1588
+          {prediction.speciesType === 'arctic' 
+            ? `DE = -0.00007345×DBH² + 0.008618×DBH + 0.8719`
+            : `DE = -0.00010000×DBH² + 0.008442×DBH + 0.8843`
+          }
         </code>
+        <p className="text-xs text-gray-500 mt-2">
+          Where DE = egg density (g/cm³), DBH = days before hatching
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          <strong>Note:</strong> We solve this quadratic equation to find DBH from the measured DE.
+        </p>
       </div>
     </div>
   )

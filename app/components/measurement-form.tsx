@@ -27,6 +27,7 @@ interface MeasurementFormData {
     latitude?: number
     longitude?: number
     siteName?: string
+    observationDateTime?: string // ISO string format
   }
   researcherNotes?: string
 }
@@ -215,8 +216,19 @@ export default function MeasurementForm({
       return
     }
 
+    // Clean up location data - remove undefined/empty values
+    const cleanLocation = formData.location ? {
+      ...(formData.location.latitude !== undefined && { latitude: formData.location.latitude }),
+      ...(formData.location.longitude !== undefined && { longitude: formData.location.longitude }),
+      ...(formData.location.siteName && { siteName: formData.location.siteName }),
+      ...(formData.location.observationDateTime && { observationDateTime: formData.location.observationDateTime })
+    } : undefined
+
     // Generate new measurement ID for next submission
-    const submissionData = { ...formData }
+    const submissionData = { 
+      ...formData,
+      location: Object.keys(cleanLocation || {}).length > 0 ? cleanLocation : undefined
+    }
     setFormData(prev => ({ ...prev, measurementId: generateId() }))
     
     onSubmit?.(submissionData)
@@ -376,11 +388,11 @@ export default function MeasurementForm({
           </p>
         </div>
 
-        {/* Location Fields (Optional) */}
+        {/* Location and Date Information (Optional) */}
         <div className="border-t pt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Location Information (Optional)</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Location and Date Information (Optional)</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Latitude
@@ -434,6 +446,38 @@ export default function MeasurementForm({
               {errors.siteName && (
                 <p className="mt-1 text-sm text-red-600">{errors.siteName}</p>
               )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Observation Date and Time
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="datetime-local"
+                  value={formData.location?.observationDateTime || ''}
+                  onChange={(e) => handleInputChange('location.observationDateTime', e.target.value || undefined)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const now = new Date()
+                    // Format as YYYY-MM-DDTHH:MM for datetime-local input
+                    const formattedNow = now.toISOString().slice(0, 16)
+                    handleInputChange('location.observationDateTime', formattedNow)
+                  }}
+                  className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors whitespace-nowrap"
+                  title="Set current date and time"
+                >
+                  Now
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                When the observation was made
+              </p>
             </div>
           </div>
         </div>

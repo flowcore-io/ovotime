@@ -110,6 +110,7 @@ export const initializeDatabase = async () => {
         latitude DECIMAL(10,7),
         longitude DECIMAL(11,7),
         site_name VARCHAR(255),
+        observation_date_time TIMESTAMP,
         researcher_notes TEXT,
         archived BOOLEAN NOT NULL DEFAULT false,
         archived_by VARCHAR(255),

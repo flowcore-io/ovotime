@@ -1,6 +1,6 @@
 # Flowcore Event Sourcing Setup Guide
 
-⚠️ **CRITICAL**: Flowcore is MANDATORY for Ovotime. The application implements true event sourcing and cannot function without Flowcore.
+**Note**: Flowcore is required for OvoTime. The application implements true event sourcing and requires Flowcore for all data persistence.
 
 This guide walks you through setting up Ovotime with Flowcore event sourcing for deployment on Vercel, following the [official Flowcore documentation](https://docs.flowcore.io/guides/5-minute-tutorial/5-min-tutorial/#understanding-flowcore-concepts).
 

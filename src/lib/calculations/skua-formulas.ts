@@ -1,6 +1,6 @@
 /**
  * Scientific calculation formulas for Skua egg hatching time prediction
- * Based on the research paper "Seabird 32-84"
+ * Based on the research paper "Seabird 32-84" and Figure 1 species-specific formulas
  */
 
 export interface SkuaCalculationInput {
@@ -12,7 +12,7 @@ export interface SkuaCalculationInput {
 }
 
 export interface SkuaCalculationResult {
-  tbh: number // days until hatching
+  tbh: number // days until hatching (DBH)
   eggDensity: number // DE in g/cm³
   eggVolume: number // VE in cm³
   confidence: number
@@ -25,15 +25,26 @@ export interface SkuaCalculationResult {
 }
 
 /**
- * Formula coefficients from the research paper
- * Note: E coefficient corrected from -0.1588 to -0.01588 based on empirical validation with real data
+ * Species-specific quadratic formula coefficients from Figure 1
+ * These formulas give DE as a function of DBH:
+ * Arctic Skua: DE = -0.00007345×DBH² + 0.008618×DBH + 0.8719
+ * Great Skua: DE = -0.00010000×DBH² + 0.008442×DBH + 0.8843
+ * 
+ * To find DBH from DE, we solve: a×DBH² + b×DBH + (c - DE) = 0
  */
-const FORMULA_COEFFICIENTS = {
-  A: -0.2412,
-  B: 0.05818,
-  C: 0.3175,
-  D: 0.8746,
-  E: -0.01588  // Corrected from -0.1588 (validated against spreadsheet data)
+const SPECIES_FORMULAS = {
+  arctic: {
+    name: 'Arctic Skua DE Formula',
+    a: -0.00007345,  // quadratic coefficient
+    b: 0.008618,     // linear coefficient  
+    c: 0.8719        // constant term
+  },
+  great: {
+    name: 'Great Skua DE Formula',
+    a: -0.00010000,  // quadratic coefficient
+    b: 0.008442,     // linear coefficient
+    c: 0.8843        // constant term
+  }
 }
 
 /**
@@ -42,11 +53,11 @@ const FORMULA_COEFFICIENTS = {
 const SPECIES_RANGES = {
   arctic: {
     density: { min: 0.80, max: 1.05 },
-    tbh: { min: 0, max: 35 }
+    dbh: { min: 0, max: 35 }
   },
   great: {
     density: { min: 0.85, max: 1.10 },
-    tbh: { min: 0, max: 35 }
+    dbh: { min: 0, max: 35 }
   }
 }
 
@@ -79,13 +90,19 @@ export function calculateEggDensity(mass: number, eggVolume: number): number {
 }
 
 /**
- * Calculate Time Before Hatching (TBH) using the quadratic formula:
- * TBH_skuas = (-0.2412 + √(0.05818 + 0.3175(0.8746 - DE))) / -0.01588
+ * Solve quadratic equation for DBH given DE using species-specific formulas.
+ * 
+ * Original formulas from Figure 1:
+ * Arctic Skua: DE = -0.00007345×DBH² + 0.008618×DBH + 0.8719
+ * Great Skua: DE = -0.00010000×DBH² + 0.008442×DBH + 0.8843
+ * 
+ * Rearranged to solve for DBH:
+ * a×DBH² + b×DBH + (c - DE) = 0
+ * 
+ * Using quadratic formula: DBH = (-b ± √(b² - 4a(c - DE))) / (2a)
  */
-export function calculateTBH(eggDensity: number): number {
-  const { A, B, C, D, E } = FORMULA_COEFFICIENTS
-  
-  // Validate egg density is within reasonable range (should be positive and typically 0.5-1.5)
+export function calculateTBH(eggDensity: number, speciesType: 'arctic' | 'great'): number {
+  // Validate egg density is within reasonable range
   if (eggDensity <= 0) {
     throw new Error(`Invalid egg density: ${eggDensity} (must be positive)`)
   }
@@ -94,31 +111,51 @@ export function calculateTBH(eggDensity: number): number {
     throw new Error(`Egg density ${eggDensity} is unusually high (>2.0 g/ml). Please verify measurements.`)
   }
   
-  // Calculate discriminant: B + C(D - DE)
-  const discriminant = B + C * (D - eggDensity)
+  // Get species-specific formula coefficients
+  const formula = SPECIES_FORMULAS[speciesType]
+  if (!formula) {
+    throw new Error(`Unknown species type: ${speciesType}`)
+  }
+  
+  const { a, b, c } = formula
+  
+  // Solve quadratic equation: a×DBH² + b×DBH + (c - DE) = 0
+  const discriminant = Math.pow(b, 2) - 4 * a * (c - eggDensity)
   
   if (discriminant < 0) {
-    throw new Error(`Invalid calculation: discriminant is negative (${discriminant.toFixed(6)}). Egg density (${eggDensity}) is outside the valid range for this formula. Expected range: 0.5-1.5 g/ml`)
+    throw new Error(`Invalid calculation: discriminant is negative (${discriminant.toFixed(6)}). Egg density (${eggDensity}) is outside the valid range for this formula.`)
   }
   
-  // Calculate TBH: (A + √discriminant) / E
-  const tbh = (A + Math.sqrt(discriminant)) / E
+  // Calculate both roots using quadratic formula
+  const sqrtDiscriminant = Math.sqrt(discriminant)
+  const root1 = (-b + sqrtDiscriminant) / (2 * a)
+  const root2 = (-b - sqrtDiscriminant) / (2 * a)
   
-  if (tbh < 0) {
-    throw new Error(`Invalid result: TBH cannot be negative (${tbh.toFixed(3)} days). Input parameters: DE=${eggDensity}, discriminant=${discriminant.toFixed(6)}`)
+  // Choose the positive root that falls within the expected range (0-35 days)
+  const validRoots = [root1, root2].filter(root => root >= 0 && root <= 35)
+  
+  if (validRoots.length === 0) {
+    throw new Error(`No valid DBH solution found. Roots: ${root1.toFixed(3)}, ${root2.toFixed(3)}. Expected range: 0-35 days.`)
   }
   
-  if (tbh > 100) {
-    throw new Error(`TBH result ${tbh.toFixed(1)} days is unusually high. Please verify measurements.`)
+  // If multiple valid roots, choose the smaller one (more likely to be correct for typical measurements)
+  const dbh = Math.min(...validRoots)
+  
+  if (dbh < 0) {
+    throw new Error(`Invalid result: DBH cannot be negative (${dbh.toFixed(3)} days). Input parameters: DE=${eggDensity}, species=${speciesType}`)
   }
   
-  return tbh
+  if (dbh > 100) {
+    throw new Error(`DBH result ${dbh.toFixed(1)} days is unusually high. Please verify measurements.`)
+  }
+  
+  return dbh
 }
 
 /**
  * Calculate confidence score based on species type and value ranges
  */
-export function calculateConfidence(eggDensity: number, tbh: number, speciesType: 'arctic' | 'great'): number {
+export function calculateConfidence(eggDensity: number, dbh: number, speciesType: 'arctic' | 'great'): number {
   const ranges = SPECIES_RANGES[speciesType]
   
   let confidence = 1.0
@@ -134,10 +171,10 @@ export function calculateConfidence(eggDensity: number, tbh: number, speciesType
     confidence *= 0.9 + 0.1 * (1 - distanceFromCenter / maxDistance)
   }
   
-  // Reduce confidence for extreme TBH values
-  if (tbh < ranges.tbh.min || tbh > ranges.tbh.max) {
-    confidence *= 0.7 // Lower confidence for extreme TBH values
-  } else if (tbh > 30) {
+  // Reduce confidence for extreme DBH values
+  if (dbh < ranges.dbh.min || dbh > ranges.dbh.max) {
+    confidence *= 0.7 // Lower confidence for extreme DBH values
+  } else if (dbh > 30) {
     confidence *= 0.8 // Slightly lower confidence for very long incubation times
   }
   
@@ -146,7 +183,7 @@ export function calculateConfidence(eggDensity: number, tbh: number, speciesType
 }
 
 /**
- * Main calculation function that performs complete TBH calculation
+ * Main calculation function that performs complete DBH calculation
  */
 export function calculateSkuaTBH(input: SkuaCalculationInput): SkuaCalculationResult {
   const { length, breadth, mass, kv, speciesType } = input
@@ -167,22 +204,29 @@ export function calculateSkuaTBH(input: SkuaCalculationInput): SkuaCalculationRe
     // Step 2: Calculate egg density
     const eggDensity = calculateEggDensity(mass, eggVolume)
     
-    // Step 3: Calculate TBH
-    const tbh = calculateTBH(eggDensity)
+    // Step 3: Calculate DBH by solving quadratic equation
+    const dbh = calculateTBH(eggDensity, speciesType)
     
     // Step 4: Calculate confidence
-    const confidence = calculateConfidence(eggDensity, tbh, speciesType)
+    const confidence = calculateConfidence(eggDensity, dbh, speciesType)
+    
+    // Get formula info for the species
+    const formula = SPECIES_FORMULAS[speciesType]
     
     return {
-      tbh: Math.round(tbh * 100) / 100, // Round to 2 decimal places
+      tbh: Math.round(dbh * 100) / 100, // Round to 2 decimal places
       eggDensity: Math.round(eggDensity * 10000) / 10000, // Round to 4 decimal places
       eggVolume: Math.round(eggVolume * 100) / 100, // Round to 2 decimal places
       confidence: Math.round(confidence * 1000) / 1000, // Round to 3 decimal places
       speciesType,
       formula: {
-        name: 'TBH_skuas',
-        version: '1.0',
-        coefficients: FORMULA_COEFFICIENTS
+        name: formula.name,
+        version: '2.1', // Updated version for corrected quadratic solving
+        coefficients: {
+          a: formula.a,
+          b: formula.b,
+          c: formula.c
+        }
       }
     }
   } catch (error) {
@@ -226,21 +270,22 @@ export function validateCalculationInput(input: SkuaCalculationInput): { isValid
     errors.push('Species type must be either "arctic" or "great"')
   }
   
-  // Pre-calculate density to check if it will work with TBH formula
+  // Pre-calculate density to check if it will work with the formula
   if (errors.length === 0) {
     try {
       const volumeMm3 = input.kv * input.length * Math.pow(input.breadth, 2)
       const volumeCm3 = volumeMm3 / 1000
       const density = input.mass / volumeCm3
       
-      // Check if density is in range that works with TBH formula
+      // Check if density is in reasonable range
       if (density < 0.5 || density > 1.5) {
-        errors.push('Calculated egg density is outside valid range for TBH formula (0.5-1.5 g/cm³)')
+        errors.push('Calculated egg density is outside reasonable range (0.5-1.5 g/cm³)')
       }
       
-      // Check discriminant
-      const B = 0.05818, C = 0.3175, D = 0.8746
-      const discriminant = B + C * (D - density)
+      // Check if quadratic equation will have valid solutions
+      const formula = SPECIES_FORMULAS[input.speciesType]
+      const { a, b, c } = formula
+      const discriminant = Math.pow(b, 2) - 4 * a * (c - density)
       if (discriminant < 0) {
         errors.push('Input parameters would result in invalid calculation (negative discriminant)')
       }
@@ -263,8 +308,8 @@ export function getSpeciesRanges(speciesType: 'arctic' | 'great') {
 }
 
 /**
- * Export formula coefficients for reference
+ * Get formula coefficients for debugging/testing
  */
 export function getFormulaCoefficients() {
-  return { ...FORMULA_COEFFICIENTS }
+  return { ...SPECIES_FORMULAS }
 } 

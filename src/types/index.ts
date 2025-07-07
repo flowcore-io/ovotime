@@ -47,6 +47,7 @@ export interface EggMeasurement {
   latitude?: number
   longitude?: number
   siteName?: string
+  observationDateTime?: string // ISO string format
   researcherNotes?: string
   submittedAt: Date
   createdAt: Date
@@ -97,6 +98,7 @@ export interface Location {
   latitude?: number
   longitude?: number
   siteName?: string
+  observationDateTime?: string // ISO string format
 }
 
 /**
