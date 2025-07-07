@@ -56,7 +56,7 @@ Where:
 
 ### Prerequisites
 
-- **Node.js** 18+ and **npm**/**yarn**
+- **Node.js** 20+ and **npm**/**yarn**
 - **Docker** and **Docker Compose** for local PostgreSQL
 - **Git** for version control
 - **Flowcore Account** (required for event sourcing architecture)

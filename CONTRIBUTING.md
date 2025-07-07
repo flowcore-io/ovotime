@@ -14,7 +14,7 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 ### Prerequisites
 
-- Node.js 18+ and npm/yarn
+- Node.js 20+ and npm/yarn
 - Docker and Docker Compose
 - Git for version control
 - A Flowcore account (for event sourcing architecture)
