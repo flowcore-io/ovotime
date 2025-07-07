@@ -13,6 +13,12 @@ interface MeasurementData {
     mass: number
     kv: number
   }
+  location?: {
+    latitude?: number
+    longitude?: number
+    siteName?: string
+    observationDateTime?: string
+  }
   prediction: SkuaCalculationResult
   submittedAt: Date
 }
@@ -58,6 +64,11 @@ const CustomTooltip = ({ active, payload }: any) => {
           <p className="text-xs text-gray-600">
             <span className="font-medium">Recorded:</span> {formatDateTimeInternational(new Date(data.submittedAt))}
           </p>
+          {data.observationDateTime && (
+            <p className="text-xs text-gray-600">
+              <span className="font-medium">Observed:</span> {formatDateTimeInternational(new Date(data.observationDateTime))}
+            </p>
+          )}
         </div>
       </div>
     )
@@ -199,6 +210,7 @@ export default function TBHScatterChart({ data, className = '', height = 400 }: 
     length: item.measurements.length,
     breadth: item.measurements.breadth,
     mass: item.measurements.mass,
+    observationDateTime: item.location?.observationDateTime,
     submittedAt: item.submittedAt
   }))
 

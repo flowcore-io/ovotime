@@ -589,6 +589,7 @@ The measurement has been submitted successfully. It may take a few moments to ap
                   measurementId: entry.measurementId,
                   speciesType: entry.speciesType,
                   measurements: entry.measurements,
+                  location: entry.location,
                   prediction: entry.prediction!,
                   submittedAt: entry.submittedAt
                 }))
