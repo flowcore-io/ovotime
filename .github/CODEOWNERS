@@ -1,0 +1,23 @@
+# Global owners - these users will be requested for review on every PR
+* @olavurellefsen
+
+# Scientific calculations and formulas require specialized review
+/src/lib/calculations/ @olavurellefsen
+/src/lib/calculations/__tests__/ @olavurellefsen
+
+# Database and event sourcing architecture
+/src/database/ @olavurellefsen
+/src/pathways/ @olavurellefsen
+
+# API endpoints that handle scientific data
+/app/api/measurements/ @olavurellefsen
+/app/api/predictions/ @olavurellefsen
+
+# Configuration files that affect scientific accuracy
+/flowcore.yaml @olavurellefsen
+/flowcore.local.development.yaml @olavurellefsen
+
+# Documentation that affects scientific understanding
+/docs/ @olavurellefsen
+/README.md @olavurellefsen
+/CONTRIBUTING.md @olavurellefsen 
