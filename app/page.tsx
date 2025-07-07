@@ -374,10 +374,10 @@ The measurement has been submitted successfully. It may take a few moments to ap
                 <p className="text-gray-600 mt-1">Arctic & Great Skua Egg Hatching Prediction</p>
               </div>
             </div>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
               <button
                 onClick={() => setShowArchived(!showArchived)}
-                className={`px-4 py-2 rounded-md transition-colors ${
+                className={`px-4 py-2 rounded-md transition-colors text-sm sm:text-base ${
                   showArchived 
                     ? 'bg-gray-600 text-white hover:bg-gray-700' 
                     : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
@@ -387,7 +387,7 @@ The measurement has been submitted successfully. It may take a few moments to ap
               </button>
               <Link
                 href="/sessions"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm sm:text-base text-center"
               >
                 Manage Sessions
               </Link>
