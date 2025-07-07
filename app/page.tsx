@@ -1,6 +1,7 @@
 'use client'
 
 import type { SkuaCalculationResult } from '@/src/lib/calculations/skua-formulas'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import MeasurementForm from './components/measurement-form'
@@ -357,9 +358,18 @@ The measurement has been submitted successfully. It may take a few moments to ap
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Ovotime</h1>
-              <p className="text-gray-600 mt-1">Arctic & Great Skua Egg Hatching Prediction</p>
+            <div className="flex items-center gap-4">
+              <Image
+                src="/logo.svg"
+                alt="Ovotime Logo"
+                width={48}
+                height={48}
+                className="flex-shrink-0"
+              />
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Ovotime</h1>
+                <p className="text-gray-600 mt-1">Arctic & Great Skua Egg Hatching Prediction</p>
+              </div>
             </div>
             <div className="flex gap-4">
               <button
