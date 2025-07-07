@@ -3,13 +3,7 @@
   "buildCommand": "yarn build",
   "outputDirectory": ".next",
   "installCommand": "yarn install --frozen-lockfile",
-  "env": {
-    "FLOWCORE_API_KEY": "@flowcore-api-key",
-    "DATABASE_URL": "@database-url",
-    "OVOTIME_API_KEY": "@ovotime-api-key",
-    "FLOWCORE_TENANT": "@flowcore-tenant",
-    "FLOWCORE_API_URL": "@flowcore-api-url"
-  },
+
   "build": {
     "env": {
       "NODE_ENV": "production"
