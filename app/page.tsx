@@ -604,7 +604,7 @@ The measurement has been submitted successfully. It may take a few moments to ap
       <footer className="bg-white border-t border-gray-200 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600">
-            <p>© 2024 Ovotime - Scientific Skua Egg Research Tool</p>
+            <p>© 2025 Ovotime - Scientific Skua Egg Research Tool</p>
             <p className="text-sm mt-2">
               Accurate hatching time predictions for Arctic and Great Skua species
             </p>
