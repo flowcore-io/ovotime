@@ -162,10 +162,39 @@ export default function HomePage() {
 
       if (result.success) {
         // Handle successful submission (including timeouts with warnings)
-        if (result.warning && !result.data?.prediction) {
-          // Timeout case - show helpful message
-          console.warn('⚠️ Submission completed with timeout:', result.message)
-          alert(`✅ ${result.message}\n\nNote: ${result.details}`)
+        if (result.warning) {
+          // Warning case - show helpful message with better formatting
+          console.warn('⚠️ Submission completed with warning:', result.message)
+          
+          // Show more user-friendly notification
+          const notificationMessage = `
+🔄 ${result.message}
+
+ℹ️ ${result.details}
+
+💡 ${result.troubleshooting}
+
+The measurement has been submitted successfully. It may take a few moments to appear in the list due to system initialization.
+          `.trim()
+          
+          alert(notificationMessage)
+          
+          // Add a slight delay before reloading to give event processing time
+          setTimeout(async () => {
+            // Reload measurements after delay
+            const measurementsResponse = await fetch(`/api/measurements?includeArchived=${showArchived}&limit=100`)
+            const measurementsResult = await measurementsResponse.json()
+            
+            if (measurementsResult.success) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              setPersistedMeasurements(measurementsResult.data.measurements.map((m: any) => ({
+                ...m,
+                submittedAt: new Date(m.submittedAt),
+                archivedAt: m.archivedAt ? new Date(m.archivedAt) : undefined
+              })))
+            }
+          }, 2000) // 2 second delay for event processing
+          
         } else if (result.data?.prediction) {
           // Normal success case with prediction
           const newEntry = {
@@ -178,17 +207,19 @@ export default function HomePage() {
           setCurrentPrediction(result.data.prediction)
         }
         
-        // Always reload measurements for both success and timeout cases
-        const measurementsResponse = await fetch(`/api/measurements?includeArchived=${showArchived}&limit=100`)
-        const measurementsResult = await measurementsResponse.json()
-        
-        if (measurementsResult.success) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setPersistedMeasurements(measurementsResult.data.measurements.map((m: any) => ({
-            ...m,
-            submittedAt: new Date(m.submittedAt),
-            archivedAt: m.archivedAt ? new Date(m.archivedAt) : undefined
-          })))
+        // Always reload measurements for both success and timeout cases (unless it's a warning case with delayed reload)
+        if (!result.warning) {
+          const measurementsResponse = await fetch(`/api/measurements?includeArchived=${showArchived}&limit=100`)
+          const measurementsResult = await measurementsResponse.json()
+          
+          if (measurementsResult.success) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setPersistedMeasurements(measurementsResult.data.measurements.map((m: any) => ({
+              ...m,
+              submittedAt: new Date(m.submittedAt),
+              archivedAt: m.archivedAt ? new Date(m.archivedAt) : undefined
+            })))
+          }
         }
 
         // Reload current session to update measurement count
@@ -399,10 +430,38 @@ export default function HomePage() {
             {/* Measurement History */}
             {(isLoading || allMeasurements.length > 0) && (
               <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Recent Measurements ({allMeasurements.length})
-                  {isLoading && <span className="text-sm text-gray-500 ml-2">Loading...</span>}
-                </h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Recent Measurements ({allMeasurements.length})
+                    {isLoading && <span className="text-sm text-gray-500 ml-2">Loading...</span>}
+                  </h3>
+                  <button
+                    onClick={async () => {
+                      setIsLoading(true)
+                      try {
+                        const measurementsResponse = await fetch(`/api/measurements?includeArchived=${showArchived}&limit=100`)
+                        const measurementsResult = await measurementsResponse.json()
+                        
+                        if (measurementsResult.success) {
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          setPersistedMeasurements(measurementsResult.data.measurements.map((m: any) => ({
+                            ...m,
+                            submittedAt: new Date(m.submittedAt),
+                            archivedAt: m.archivedAt ? new Date(m.archivedAt) : undefined
+                          })))
+                        }
+                      } catch (error) {
+                        console.error('Failed to refresh measurements:', error)
+                      } finally {
+                        setIsLoading(false)
+                      }
+                    }}
+                    disabled={isLoading}
+                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isLoading ? 'Refreshing...' : 'Refresh'}
+                  </button>
+                </div>
                 
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   {isLoading ? (

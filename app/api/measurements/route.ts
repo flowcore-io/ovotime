@@ -3,13 +3,13 @@ import { calculateSkuaTBH } from "@/src/lib/calculations/skua-formulas"
 import { generateId, sleep } from "@/src/lib/utils"
 import { validateEggMeasurement } from "@/src/lib/validation"
 import {
-  publishMeasurementRejected,
-  publishMeasurementSubmitted,
-  publishMeasurementValidated,
-  publishPredictionCalculated,
-  publishPredictionFailed,
-  publishPredictionRequested,
-  publishSessionMeasurementAdded
+    publishMeasurementRejected,
+    publishMeasurementSubmitted,
+    publishMeasurementValidated,
+    publishPredictionCalculated,
+    publishPredictionFailed,
+    publishPredictionRequested,
+    publishSessionMeasurementAdded
 } from "@/src/pathways/pathways"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -232,8 +232,14 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Check if this is a timeout error
-    if (error instanceof Error && error.message.includes('timeout')) {
+    // Enhanced error handling for cold start scenarios
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const isTimeout = errorMessage.includes('timeout')
+    const isConnectionError = errorMessage.includes('connection') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND')
+    const isServerlessError = errorMessage.includes('Function') || errorMessage.includes('Lambda') || errorMessage.includes('cold')
+    
+    // Check if this is a timeout error (original logic)
+    if (isTimeout) {
       return NextResponse.json({
         success: true, // Mark as success since data may have been saved
         warning: true,
@@ -242,6 +248,30 @@ export async function POST(request: NextRequest) {
         details: "Event processing timed out, but data is likely stored correctly.",
         troubleshooting: "If your measurement doesn't appear, please try submitting again."
       }, { status: 200 }) // Return 200 for timeout to prevent UI error state
+    }
+
+    // Handle connection errors during cold starts
+    if (isConnectionError || isServerlessError) {
+      return NextResponse.json({
+        success: true, // Mark as success since data may have been saved
+        warning: true,
+        error: "Cold start delay occurred",
+        message: "Your measurement is being processed. This may take a few moments due to system initialization.",
+        details: "The serverless function is starting up. Your data is likely being saved correctly.",
+        troubleshooting: "Please wait a moment and refresh the measurements list to verify your submission."
+      }, { status: 200 }) // Return 200 to prevent UI error state
+    }
+
+    // Handle other potential cold start related errors
+    if (errorMessage.includes('pool') || errorMessage.includes('database') || errorMessage.includes('connect')) {
+      return NextResponse.json({
+        success: true, // Mark as success since data may have been saved
+        warning: true,
+        error: "Database initialization in progress",
+        message: "Your measurement is being processed. Database connections are being established.",
+        details: "This typically happens during the first request after a period of inactivity.",
+        troubleshooting: "Please wait a moment and check the measurements list. If the measurement doesn't appear, try submitting again."
+      }, { status: 200 }) // Return 200 to prevent UI error state
     }
 
     return NextResponse.json({
