@@ -1,6 +1,7 @@
 'use client'
 
 import type { SkuaCalculationResult } from '@/src/lib/calculations/skua-formulas'
+import { formatDateInternational, formatDateTimeInternational, formatTimeInternational } from '@/src/lib/utils'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
@@ -511,7 +512,7 @@ The measurement has been submitted successfully. It may take a few moments to ap
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-gray-500">
-                            {entry.submittedAt.toLocaleTimeString()}
+                            {formatTimeInternational(entry.submittedAt)}
                           </span>
                           {!entry.archived && (
                             <button
@@ -560,13 +561,13 @@ The measurement has been submitted successfully. It may take a few moments to ap
 
                       {entry.location?.observationDateTime && (
                         <p className="text-xs text-gray-500 mt-1">
-                          🕐 Observed: {new Date(entry.location.observationDateTime).toLocaleString()}
+                          🕐 Observed: {formatDateTimeInternational(new Date(entry.location.observationDateTime))}
                         </p>
                       )}
 
                       {entry.archived && entry.archivedBy && (
                         <p className="text-xs text-gray-500 mt-1">
-                          🗃️ Archived by {entry.archivedBy} {entry.archivedAt && `on ${entry.archivedAt.toLocaleDateString()}`}
+                          🗃️ Archived by {entry.archivedBy} {entry.archivedAt && `on ${formatDateInternational(entry.archivedAt)}`}
                           {entry.archiveReason && ` - ${entry.archiveReason}`}
                         </p>
                       )}

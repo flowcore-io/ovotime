@@ -63,4 +63,25 @@ export function formatDateISO(date: Date): string {
  */
 export function parseDateISO(dateString: string): Date {
   return new Date(dateString)
+}
+
+/**
+ * Format a date/time in international format (YYYY-MM-DD HH:MM:SS Z)
+ */
+export function formatDateTimeInternational(date: Date): string {
+  return date.toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, ' Z')
+}
+
+/**
+ * Format a date in international format (YYYY-MM-DD)
+ */
+export function formatDateInternational(date: Date): string {
+  return date.toISOString().split('T')[0]
+}
+
+/**
+ * Format a time in international format (HH:MM:SS Z)
+ */
+export function formatTimeInternational(date: Date): string {
+  return date.toISOString().split('T')[1].replace(/\.\d{3}Z$/, ' Z')
 } 

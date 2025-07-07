@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDateInternational } from '@/src/lib/utils'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import SessionManager from '../components/session-manager'
@@ -206,7 +207,7 @@ export default function SessionsPage() {
                         {session.measurementCount} measurements
                       </div>
                       <div className="text-sm text-gray-500">
-                        {new Date(session.startedAt).toLocaleDateString()}
+                        {formatDateInternational(new Date(session.startedAt))}
                       </div>
                     </div>
                   </div>

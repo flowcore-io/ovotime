@@ -1,6 +1,6 @@
 'use client'
 
-import { generateId } from '@/src/lib/utils'
+import { formatDateInternational, formatDateTimeInternational, generateId } from '@/src/lib/utils'
 import { useCallback, useState } from 'react'
 
 interface SessionData {
@@ -183,7 +183,7 @@ export default function SessionManager({
                 {currentSession.researcher} • {formatLocation(currentSession.location)}
               </p>
               <p className="text-sm text-gray-500">
-                Started: {new Date(currentSession.startedAt).toLocaleString()}
+                Started: {formatDateTimeInternational(new Date(currentSession.startedAt))}
               </p>
               <p className="text-sm text-gray-500">
                 Measurements: {currentSession.measurementCount}
@@ -320,7 +320,7 @@ export default function SessionManager({
                         {session.researcher} • {formatLocation(session.location)}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {new Date(session.startedAt).toLocaleDateString()} • {session.measurementCount} measurements
+                        {formatDateInternational(new Date(session.startedAt))} • {session.measurementCount} measurements
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

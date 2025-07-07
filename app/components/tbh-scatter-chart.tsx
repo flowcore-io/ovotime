@@ -1,6 +1,7 @@
 'use client'
 
 import type { SkuaCalculationResult } from '@/src/lib/calculations/skua-formulas'
+import { formatDateTimeInternational } from '@/src/lib/utils'
 import { CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from 'recharts'
 
 interface MeasurementData {
@@ -55,7 +56,7 @@ const CustomTooltip = ({ active, payload }: any) => {
             <span className="font-medium">Mass:</span> {data.mass}g
           </p>
           <p className="text-xs text-gray-600">
-            <span className="font-medium">Recorded:</span> {new Date(data.submittedAt).toLocaleString()}
+            <span className="font-medium">Recorded:</span> {formatDateTimeInternational(new Date(data.submittedAt))}
           </p>
         </div>
       </div>
