@@ -15,20 +15,34 @@ This application implements the mathematical models described in **"Seabird 32-8
 
 ### Formula Implementation
 
-The core prediction formula calculates TBH using:
+The core prediction uses species-specific quadratic formulas from Figure 1. These formulas give egg density as a function of days before hatching:
+
+**Arctic Skua (*Stercorarius parasiticus*)**:
 ```
-TBH = (-0.2412 + √(0.05818 + 0.3175(0.8746 - DE))) / -0.1588
+DE = -0.00007345×DBH² + 0.008618×DBH + 0.8719
+```
+
+**Great Skua (*Stercorarius skua*)**:
+```
+DE = -0.00010000×DBH² + 0.008442×DBH + 0.8843
+```
+
+To find DBH from the measured DE, we solve the quadratic equation using the quadratic formula:
+```
+DBH = (-b ± √(b² - 4a(c - DE))) / (2a)
 ```
 
 Where:
 - **DE** = Egg density (g/cm³) = mass / volume
 - **Volume** = KV × length × breadth² (converted from mm³ to cm³)
 - **KV** = Egg-shape constant (default: 0.507)
+- **DBH** = Days Before Hatching
+- **a, b, c** = Species-specific coefficients from the formulas above
 
 ## ✨ Features
 
-- **🎯 Species-Specific Predictions**: Supports both Arctic and Great Skua species
-- **📊 Real-time Calculations**: Instant TBH predictions as you input measurements
+- **🎯 Species-Specific Predictions**: Supports both Arctic and Great Skua species with dedicated formulas
+- **📊 Real-time Calculations**: Instant DBH predictions as you input measurements
 - **🗺️ Location Tracking**: Optional GPS coordinates and site name recording
 - **📝 Research Notes**: Field for researcher observations and notes
 - **📈 Confidence Scoring**: Reliability assessment for each prediction
@@ -297,7 +311,7 @@ echo $DATABASE_URL
    - Mass (g)
    - KV value (optional, defaults to 0.507)
 3. **Add Location** (optional): GPS coordinates or site name
-4. **Submit**: Get instant TBH prediction with confidence score
+4. **Submit**: Get instant DBH prediction with confidence score
 5. **Review**: Check prediction details and research notes
 
 ### API Endpoints
@@ -388,16 +402,20 @@ interface MeasurementData {
 ### Prediction Output
 ```typescript
 interface PredictionResult {
-  tbh: number           // Time Before Hatching (days)
+  tbh: number           // Days Before Hatching (DBH)
   eggDensity: number    // g/cm³
   eggVolume: number     // cm³
   confidence: number    // 0-1 reliability score
   speciesType: 'arctic' | 'great'
-  formula: {
-    name: string
-    version: string
-    coefficients: Record<string, number>
-  }
+      formula: {
+      name: string        // Species-specific formula name
+      version: string     // Formula version (2.1 for quadratic equation solving)
+      coefficients: {     // Quadratic coefficients a, b, c
+        a: number
+        b: number
+        c: number
+      }
+    }
 }
 ```
 
