@@ -385,7 +385,8 @@ export async function GET(request: NextRequest) {
         location: {
           latitude: row.latitude ? parseFloat(row.latitude) : undefined,
           longitude: row.longitude ? parseFloat(row.longitude) : undefined,
-          siteName: row.site_name
+          siteName: row.site_name,
+          observationDateTime: row.observation_date_time
         },
         researcherNotes: row.researcher_notes,
         prediction: row.prediction_id ? {

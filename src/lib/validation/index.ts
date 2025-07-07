@@ -200,6 +200,7 @@ export function validateEggMeasurement(data: {
     latitude?: number
     longitude?: number
     siteName?: string
+    observationDateTime?: string
   }
 }): { isValid: boolean; errors: string[] } {
   const errors: string[] = []

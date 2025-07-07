@@ -22,6 +22,7 @@ interface MeasurementFormData {
     latitude?: number
     longitude?: number
     siteName?: string
+    observationDateTime?: string
   }
   researcherNotes?: string
 }
@@ -42,6 +43,7 @@ interface PersistedMeasurement {
     latitude?: number
     longitude?: number
     siteName?: string
+    observationDateTime?: string
   }
   researcherNotes?: string
   prediction?: SkuaCalculationResult & {
@@ -546,13 +548,19 @@ The measurement has been submitted successfully. It may take a few moments to ap
                       
                       {entry.sessionName && (
                         <p className="text-xs text-gray-500 mt-2">
-                          �� {entry.sessionName}
+                          📝 {entry.sessionName}
                         </p>
                       )}
                       
                       {entry.location?.siteName && (
                         <p className="text-xs text-gray-500 mt-1">
                           📍 {entry.location.siteName}
+                        </p>
+                      )}
+
+                      {entry.location?.observationDateTime && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          🕐 Observed: {new Date(entry.location.observationDateTime).toLocaleString()}
                         </p>
                       )}
 

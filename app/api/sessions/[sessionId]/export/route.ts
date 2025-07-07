@@ -71,6 +71,7 @@ export async function GET(
           m.latitude,
           m.longitude,
           m.site_name,
+          m.observation_date_time,
           m.researcher_notes,
           m.submitted_at,
           p.id as prediction_id,
@@ -111,6 +112,7 @@ export async function GET(
             longitude: row.longitude,
             siteName: row.site_name
           }),
+          observationDateTime: row.observation_date_time,
           researcherNotes: row.researcher_notes,
           // Prediction data (may be null if no prediction calculated)
           predictionId: row.prediction_id,
@@ -133,6 +135,7 @@ export async function GET(
           'Location',
           'Measurement ID',
           'Timestamp',
+          'Observation Date/Time',
           'Species Type',
           'Length (mm)',
           'Breadth (mm)',
@@ -142,7 +145,8 @@ export async function GET(
           'Egg Volume (cm³)',
           'TBH (days)',
           'Confidence',
-          'Measurement Location'
+          'Measurement Location',
+          'Researcher Notes'
         ]
         
         // Helper function to escape CSV values
@@ -162,6 +166,7 @@ export async function GET(
           escapeCsvValue(sessionData.location),
           escapeCsvValue(measurement.measurementId),
           escapeCsvValue(measurement.timestamp.toISOString()),
+          escapeCsvValue(measurement.observationDateTime ? new Date(measurement.observationDateTime).toISOString() : ''),
           escapeCsvValue(measurement.speciesType),
           escapeCsvValue(measurement.length),
           escapeCsvValue(measurement.breadth),
@@ -171,7 +176,8 @@ export async function GET(
           escapeCsvValue(measurement.eggVolume),
           escapeCsvValue(measurement.tbh),
           escapeCsvValue(measurement.confidence),
-          escapeCsvValue(measurement.location)
+          escapeCsvValue(measurement.location),
+          escapeCsvValue(measurement.researcherNotes)
         ])
         
         const csvContent = [
@@ -201,6 +207,7 @@ export async function GET(
           measurements: sessionData.measurements.map(measurement => ({
             measurementId: measurement.measurementId,
             timestamp: measurement.timestamp,
+            observationDateTime: measurement.observationDateTime,
             speciesType: measurement.speciesType,
             measurements: {
               length: measurement.length,
@@ -214,7 +221,8 @@ export async function GET(
               tbh: measurement.tbh,
               confidence: measurement.confidence
             },
-            location: measurement.location
+            location: measurement.location,
+            researcherNotes: measurement.researcherNotes
           }))
         }, null, 2)
         
