@@ -13,12 +13,7 @@ interface MeasurementData {
     mass: number
     kv: number
   }
-  location?: {
-    latitude?: number
-    longitude?: number
-    siteName?: string
-    observationDateTime?: string
-  }
+  observationDateTime?: string
   prediction: SkuaCalculationResult
   submittedAt: Date
 }
@@ -210,7 +205,7 @@ export default function TBHScatterChart({ data, className = '', height = 400 }: 
     length: item.measurements.length,
     breadth: item.measurements.breadth,
     mass: item.measurements.mass,
-    observationDateTime: item.location?.observationDateTime,
+    observationDateTime: item.observationDateTime,
     submittedAt: item.submittedAt
   }))
 

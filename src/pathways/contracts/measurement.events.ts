@@ -26,23 +26,18 @@ export const MeasurementSubmittedSchema = z.object({
     mass: z.number().min(1).max(200), // g
     kv: z.number().min(0.1).max(1.0).default(0.507) // egg-shape constant
   }),
-  location: z.object({
-    latitude: z.number().min(-90).max(90).optional(),
-    longitude: z.number().min(-180).max(180).optional(),
-    siteName: z.string().min(1).max(255).optional(),
-    observationDateTime: z.string().optional().transform((val) => {
-      // Handle undefined or empty string
-      if (!val || val.trim() === '') {
-        return undefined
-      }
-      // Handle datetime-local format (YYYY-MM-DDTHH:MM) and convert to ISO datetime
-      if (val.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
-        return val + ':00.000Z'
-      }
-      // If it's already in ISO format, return as is
-      return val
-    })
-  }).optional(),
+  observationDateTime: z.string().optional().transform((val) => {
+    // Handle undefined or empty string
+    if (!val || val.trim() === '') {
+      return undefined
+    }
+    // Handle datetime-local format (YYYY-MM-DDTHH:MM) and convert to ISO datetime
+    if (val.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
+      return val + ':00.000Z'
+    }
+    // If it's already in ISO format, return as is
+    return val
+  }),
   researcherNotes: z.string().max(1000).optional(),
   timestamp: dateSchema
 })

@@ -77,11 +77,6 @@ export interface ResearchSession {
   id: string
   sessionName: string
   researcherId: string
-  startLocation?: {
-    latitude: number
-    longitude: number
-    siteName: string
-  }
   expectedDuration?: number // hours
   researchGoals?: string
   measurementCount: number
@@ -91,15 +86,7 @@ export interface ResearchSession {
   createdAt: Date
 }
 
-/**
- * Location interface
- */
-export interface Location {
-  latitude?: number
-  longitude?: number
-  siteName?: string
-  observationDateTime?: string // ISO string format
-}
+
 
 /**
  * Formula interface

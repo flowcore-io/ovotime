@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const predictionId = generateId()
     
     // Extract measurement data first
-    const { measurements, speciesType, location, researcherNotes, sessionId } = body
+    const { measurements, speciesType, observationDateTime, researcherNotes, sessionId } = body
     
     // Validate measurement data - flatten measurements for validation
     const validationData = {
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       mass: measurements.mass,
       kv: measurements.kv,
       speciesType,
-      location
+      observationDateTime
     }
     
     const validationResult = validateEggMeasurement(validationData)
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         sessionId,
         speciesType,
         measurements,
-        location,
+        observationDateTime,
         researcherNotes,
         timestamp: new Date()
       })
@@ -382,12 +382,7 @@ export async function GET(request: NextRequest) {
           mass: parseFloat(row.mass),
           kv: parseFloat(row.kv)
         },
-        location: {
-          latitude: row.latitude ? parseFloat(row.latitude) : undefined,
-          longitude: row.longitude ? parseFloat(row.longitude) : undefined,
-          siteName: row.site_name,
-          observationDateTime: row.observation_date_time
-        },
+        observationDateTime: row.observation_date_time,
         researcherNotes: row.researcher_notes,
         prediction: row.prediction_id ? {
           tbh: parseFloat(row.tbh),
