@@ -20,11 +20,7 @@ export const SessionStartedSchema = z.object({
   sessionId: z.string(),
   sessionName: z.string().min(1).max(255),
   researcherId: z.string().min(1).max(255),
-  startLocation: z.object({
-    latitude: z.number().min(-90).max(90),
-    longitude: z.number().min(-180).max(180),
-    siteName: z.string().min(1).max(255)
-  }).optional(),
+
   expectedDuration: z.number().min(1).max(480).optional(), // hours (max 20 days)
   researchGoals: z.string().max(1000).optional(),
   startedAt: dateSchema

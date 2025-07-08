@@ -196,12 +196,7 @@ export function validateEggMeasurement(data: {
   mass: number
   kv: number
   speciesType: string
-  location?: {
-    latitude?: number
-    longitude?: number
-    siteName?: string
-    observationDateTime?: string
-  }
+  observationDateTime?: string
 }): { isValid: boolean; errors: string[] } {
   const errors: string[] = []
   
@@ -231,20 +226,8 @@ export function validateEggMeasurement(data: {
     errors.push(speciesResult.error)
   }
   
-  // Validate location if provided
-  if (data.location) {
-    const coordsResult = validateCoordinates(data.location.latitude, data.location.longitude)
-    if (!coordsResult.isValid && coordsResult.error) {
-      errors.push(coordsResult.error)
-    }
-    
-    if (data.location.siteName) {
-      const siteResult = validateSiteName(data.location.siteName)
-      if (!siteResult.isValid && siteResult.error) {
-        errors.push(siteResult.error)
-      }
-    }
-  }
+  // Note: observationDateTime validation could be added here if needed
+  // Currently we accept any valid ISO datetime string or undefined
   
   return {
     isValid: errors.length === 0,

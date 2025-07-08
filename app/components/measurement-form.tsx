@@ -23,12 +23,7 @@ interface MeasurementFormData {
     mass: number
     kv: number
   }
-  location?: {
-    latitude?: number
-    longitude?: number
-    siteName?: string
-    observationDateTime?: string // ISO string format
-  }
+  observationDateTime?: string // ISO string format
   researcherNotes?: string
 }
 
@@ -38,9 +33,6 @@ interface FormErrors {
   mass?: string
   kv?: string
   speciesType?: string
-  latitude?: string
-  longitude?: string
-  siteName?: string
   general?: string
 }
 
@@ -61,7 +53,7 @@ export default function MeasurementForm({
       mass: 0,
       kv: 0.507
     },
-    location: {},
+    observationDateTime: '',
     researcherNotes: ''
   })
 
@@ -156,7 +148,7 @@ export default function MeasurementForm({
         mass: formData.measurements.mass,
         kv: formData.measurements.kv,
         speciesType: formData.speciesType,
-        location: formData.location
+        observationDateTime: formData.observationDateTime
       })
 
       if (!measurementValidation.isValid) {
@@ -166,9 +158,6 @@ export default function MeasurementForm({
           else if (error.includes('mass')) newErrors.mass = error
           else if (error.includes('Kv')) newErrors.kv = error
           else if (error.includes('Species')) newErrors.speciesType = error
-          else if (error.includes('Latitude')) newErrors.latitude = error
-          else if (error.includes('Longitude')) newErrors.longitude = error
-          else if (error.includes('Site')) newErrors.siteName = error
           else newErrors.general = error
         })
       }
@@ -191,15 +180,6 @@ export default function MeasurementForm({
             [measurementField]: value
           }
         }
-      } else if (field.startsWith('location.')) {
-        const locationField = field.split('.')[1]
-        return {
-          ...prev,
-          location: {
-            ...prev.location,
-            [locationField]: value
-          }
-        }
       } else {
         return {
           ...prev,
@@ -216,19 +196,8 @@ export default function MeasurementForm({
       return
     }
 
-    // Clean up location data - remove undefined/empty values
-    const cleanLocation = formData.location ? {
-      ...(formData.location.latitude !== undefined && { latitude: formData.location.latitude }),
-      ...(formData.location.longitude !== undefined && { longitude: formData.location.longitude }),
-      ...(formData.location.siteName && { siteName: formData.location.siteName }),
-      ...(formData.location.observationDateTime && { observationDateTime: formData.location.observationDateTime })
-    } : undefined
-
     // Generate new measurement ID for next submission
-    const submissionData = { 
-      ...formData,
-      location: Object.keys(cleanLocation || {}).length > 0 ? cleanLocation : undefined
-    }
+    const submissionData = { ...formData }
     setFormData(prev => ({ ...prev, measurementId: generateId() }))
     
     onSubmit?.(submissionData)
@@ -245,7 +214,7 @@ export default function MeasurementForm({
         mass: 0,
         kv: 0.507
       },
-      location: {},
+      observationDateTime: '',
       researcherNotes: ''
     })
     setErrors({})
@@ -388,67 +357,10 @@ export default function MeasurementForm({
           </p>
         </div>
 
-        {/* Location and Date Information (Optional) */}
+        {/* Observation Information */}
         <div className="border-t pt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Location and Date Information (Optional)</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Observation Information</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Latitude
-              </label>
-              <input
-                type="number"
-                step="0.000001"
-                min="-90"
-                max="90"
-                value={formData.location?.latitude || ''}
-                onChange={(e) => handleInputChange('location.latitude', parseFloat(e.target.value) || undefined)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g. 62.017"
-              />
-              {errors.latitude && (
-                <p className="mt-1 text-sm text-red-600">{errors.latitude}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Longitude
-              </label>
-              <input
-                type="number"
-                step="0.000001"
-                min="-180"
-                max="180"
-                value={formData.location?.longitude || ''}
-                onChange={(e) => handleInputChange('location.longitude', parseFloat(e.target.value) || undefined)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g. -6.767"
-              />
-              {errors.longitude && (
-                <p className="mt-1 text-sm text-red-600">{errors.longitude}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Site Name
-              </label>
-              <input
-                type="text"
-                maxLength={255}
-                value={formData.location?.siteName || ''}
-                onChange={(e) => handleInputChange('location.siteName', e.target.value || undefined)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g. Fugloy"
-              />
-              {errors.siteName && (
-                <p className="mt-1 text-sm text-red-600">{errors.siteName}</p>
-              )}
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -457,8 +369,8 @@ export default function MeasurementForm({
               <div className="flex gap-2">
                 <input
                   type="datetime-local"
-                  value={formData.location?.observationDateTime || ''}
-                  onChange={(e) => handleInputChange('location.observationDateTime', e.target.value || undefined)}
+                  value={formData.observationDateTime || ''}
+                  onChange={(e) => handleInputChange('observationDateTime', e.target.value || '')}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <button
@@ -467,7 +379,7 @@ export default function MeasurementForm({
                     const now = new Date()
                     // Format as YYYY-MM-DDTHH:MM for datetime-local input
                     const formattedNow = now.toISOString().slice(0, 16)
-                    handleInputChange('location.observationDateTime', formattedNow)
+                    handleInputChange('observationDateTime', formattedNow)
                   }}
                   className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors whitespace-nowrap"
                   title="Set current date and time"
@@ -478,6 +390,11 @@ export default function MeasurementForm({
               <p className="mt-1 text-xs text-gray-500">
                 When the observation was made
               </p>
+            </div>
+            
+            {/* Placeholder for future nest/clutch fields */}
+            <div className="text-sm text-gray-500 italic">
+              <p>Nest ID and clutch information fields will be added here in future updates.</p>
             </div>
           </div>
         </div>

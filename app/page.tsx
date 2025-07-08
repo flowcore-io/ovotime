@@ -19,12 +19,7 @@ interface MeasurementFormData {
     mass: number
     kv: number
   }
-  location?: {
-    latitude?: number
-    longitude?: number
-    siteName?: string
-    observationDateTime?: string
-  }
+  observationDateTime?: string
   researcherNotes?: string
 }
 
@@ -40,12 +35,7 @@ interface PersistedMeasurement {
     mass: number
     kv: number
   }
-  location?: {
-    latitude?: number
-    longitude?: number
-    siteName?: string
-    observationDateTime?: string
-  }
+  observationDateTime?: string
   researcherNotes?: string
   prediction?: SkuaCalculationResult & {
     formulaName?: string
@@ -63,7 +53,6 @@ interface SessionData {
   sessionId: string
   title: string
   researcher: string
-  location: string | { latitude?: number; longitude?: number; siteName?: string }
   startedAt: Date
   endedAt?: Date
   notes?: string
@@ -71,26 +60,7 @@ interface SessionData {
   status: 'active' | 'completed' | 'paused'
 }
 
-// Helper function to format location for display
-const formatLocation = (location: string | { latitude?: number; longitude?: number; siteName?: string } | null | undefined): string => {
-  if (!location) return 'Unknown location'
-  
-  if (typeof location === 'string') {
-    return location
-  }
-  
-  if (typeof location === 'object') {
-    if (location.siteName) {
-      return location.siteName
-    }
-    if (location.latitude !== undefined && location.longitude !== undefined) {
-      return `${location.latitude}, ${location.longitude}`
-    }
-    return 'Coordinates provided'
-  }
-  
-  return 'Unknown location'
-}
+
 
 export default function HomePage() {
   const [currentPrediction, setCurrentPrediction] = useState<SkuaCalculationResult | null>(null)
@@ -315,9 +285,9 @@ The measurement has been submitted successfully. It may take a few moments to ap
       prediction: entry.prediction,
       submittedAt: entry.submittedAt,
       archived: false,
-      location: entry.measurement.location,
+      observationDateTime: entry.measurement.observationDateTime,
       researcherNotes: entry.measurement.researcherNotes,
-      sessionName: entry.measurement.sessionId && currentSession ? `${currentSession.title} (${formatLocation(currentSession.location)})` : undefined,
+      sessionName: entry.measurement.sessionId && currentSession ? currentSession.title : undefined,
       archivedBy: undefined,
       archiveReason: undefined,
       archivedAt: undefined
@@ -346,7 +316,7 @@ The measurement has been submitted successfully. It may take a few moments to ap
       } : null,
       submittedAt: m.submittedAt,
       archived: m.archived,
-      location: m.location,
+      observationDateTime: m.observationDateTime,
       researcherNotes: m.researcherNotes,
       sessionName: m.sessionName,
       archivedBy: m.archivedBy,
@@ -408,9 +378,7 @@ The measurement has been submitted successfully. It may take a few moments to ap
                     <p className="text-sm text-blue-700">
                       {currentSession.title} • {currentSession.researcher}
                     </p>
-                    <p className="text-xs text-blue-600">
-                      📍 {formatLocation(currentSession.location)}
-                    </p>
+
                     <p className="text-xs text-blue-600">
                       {currentSession.measurementCount} measurements recorded
                     </p>
@@ -553,15 +521,9 @@ The measurement has been submitted successfully. It may take a few moments to ap
                         </p>
                       )}
                       
-                      {entry.location?.siteName && (
+                      {entry.observationDateTime && (
                         <p className="text-xs text-gray-500 mt-1">
-                          📍 {entry.location.siteName}
-                        </p>
-                      )}
-
-                      {entry.location?.observationDateTime && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          🕐 Observed: {formatDateTimeInternational(new Date(entry.location.observationDateTime))}
+                          🕐 Observed: {formatDateTimeInternational(new Date(entry.observationDateTime))}
                         </p>
                       )}
 
@@ -589,7 +551,7 @@ The measurement has been submitted successfully. It may take a few moments to ap
                   measurementId: entry.measurementId,
                   speciesType: entry.speciesType,
                   measurements: entry.measurements,
-                  location: entry.location,
+                  observationDateTime: entry.observationDateTime,
                   prediction: entry.prediction!,
                   submittedAt: entry.submittedAt
                 }))

@@ -13,7 +13,6 @@ export async function sessionStartedTransformer(
     sessionId, 
     sessionName, 
     researcherId,
-    startLocation,
     expectedDuration,
     researchGoals,
     startedAt 
@@ -28,7 +27,6 @@ export async function sessionStartedTransformer(
         id, 
         session_name, 
         researcher_id, 
-        start_location, 
         expected_duration, 
         research_goals, 
         measurement_count, 
@@ -37,13 +35,12 @@ export async function sessionStartedTransformer(
         created_at, 
         updated_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, 0, 'active'::session_status, $7, NOW(), NOW()
+        $1, $2, $3, $4, $5, 0, 'active'::session_status, $6, NOW(), NOW()
       )
     `, [
       sessionId,
       sessionName,
       researcherId,
-      startLocation ? JSON.stringify(startLocation) : null,
       expectedDuration,
       researchGoals,
       startedAt

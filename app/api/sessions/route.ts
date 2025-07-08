@@ -34,52 +34,13 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Validate and prepare location data
-    let startLocation = undefined
-    if (body.location) {
-      if (typeof body.location === 'string') {
-        // Simple string location - create default coordinates
-        startLocation = {
-          latitude: 0,
-          longitude: 0,
-          siteName: body.location.trim()
-        }
-      } else if (body.location.latitude !== undefined && body.location.longitude !== undefined) {
-        // Full location object with coordinates
-        const lat = Number(body.location.latitude)
-        const lng = Number(body.location.longitude)
-        const siteName = body.location.siteName || body.location.toString()
 
-        if (isNaN(lat) || lat < -90 || lat > 90) {
-          return NextResponse.json({
-            success: false,
-            error: "Validation error",
-            message: "Invalid latitude: must be a number between -90 and 90"
-          }, { status: 400 })
-        }
-
-        if (isNaN(lng) || lng < -180 || lng > 180) {
-          return NextResponse.json({
-            success: false,
-            error: "Validation error",
-            message: "Invalid longitude: must be a number between -180 and 180"
-          }, { status: 400 })
-        }
-
-        startLocation = {
-          latitude: lat,
-          longitude: lng,
-          siteName: typeof siteName === 'string' ? siteName.trim() : siteName.toString()
-        }
-      }
-    }
 
     // Create session data with proper field mapping
     const sessionData = {
       sessionId,
       sessionName: sessionName.trim(),
       researcherId: researcherId.trim(),
-      startLocation,
       researchGoals: body.notes || body.researchGoals,
       startedAt: new Date()
     }
@@ -116,7 +77,7 @@ export async function POST(request: NextRequest) {
             sessionId: session.id,
             title: session.session_name,
             researcher: session.researcher_id,
-            location: session.start_location,
+
             notes: session.research_goals,
             measurementCount: session.measurement_count,
             status: session.status,
@@ -233,7 +194,7 @@ export async function GET(request: NextRequest) {
         sessionId: row.id,
         title: row.session_name,
         researcher: row.researcher_id,
-        location: row.start_location,
+
         notes: row.research_goals,
         measurementCount: parseInt(row.measurement_count_actual) || 0,
         status: row.status,
