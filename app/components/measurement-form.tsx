@@ -37,7 +37,7 @@ interface FormErrors {
   general?: string
 }
 
-// Species-specific default values (middle of actual species ranges)
+// Species-specific default values (medians from actual species data)
 const getSpeciesDefaults = (speciesType: SpeciesType) => {
   const defaults = {
     arctic: {
@@ -47,9 +47,9 @@ const getSpeciesDefaults = (speciesType: SpeciesType) => {
       kv: 0.507      // Standard egg-shape constant
     },
     great: {
-      length: 74.5,  // Middle of Great Skua range (70-79mm)
-      breadth: 53.0, // Middle of Great Skua range (51-55mm)
-      mass: 88.5,    // Middle of Great Skua range (82-95g)
+      length: 71.1,  // Median from updated Great Skua data (60.6-79.8mm)
+      breadth: 49.5, // Median from updated Great Skua data (45.2-54.6mm)
+      mass: 92.5,    // Middle of updated Great Skua range (75-110g)
       kv: 0.507      // Standard egg-shape constant
     }
   }
@@ -65,9 +65,9 @@ const getSpeciesRanges = (speciesType: SpeciesType) => {
       mass: { min: 42, max: 52 }       // Arctic Skua: 42–52g
     },
     great: {
-      length: { min: 70, max: 79 },    // Great Skua: 7.0–7.9 cm
-      breadth: { min: 51, max: 55 },   // Great Skua: 5.1–5.5 cm
-      mass: { min: 82, max: 95 }       // Great Skua: 82–95g
+      length: { min: 60.6, max: 79.8 },    // Great Skua: updated from chart data
+      breadth: { min: 45.2, max: 54.6 },   // Great Skua: updated from chart data (54.55 rounded)
+      mass: { min: 75, max: 110 }       // Great Skua: updated range 75-110g
     }
   }
   return ranges[speciesType]
@@ -82,9 +82,9 @@ const getSpeciesSliderRanges = (speciesType: SpeciesType) => {
       mass: { min: 40, max: 54 }       // Arctic: 42-52 typical + 2g margin
     },
     great: {
-      length: { min: 68, max: 82 },    // Great: 70-79 typical + 2-3mm margin
-      breadth: { min: 49, max: 57 },   // Great: 51-55 typical + 2mm margin
-      mass: { min: 80, max: 100 }      // Great: 82-95 typical + 5g margin
+      length: { min: 59, max: 82 },    // Great: 60.6-79.8 typical + small margin
+      breadth: { min: 44, max: 56 },   // Great: 45.2-54.6 typical + small margin
+      mass: { min: 72, max: 115 }      // Great: 75-110 typical + small margin
     }
   }
   return ranges[speciesType]
@@ -100,8 +100,8 @@ export default function MeasurementForm({
   const [formData, setFormData] = useState<MeasurementFormData>({
     measurementId: generateId(),
     sessionId,
-    speciesType: 'arctic',
-    measurements: getSpeciesDefaults('arctic'),
+    speciesType: 'great',
+    measurements: getSpeciesDefaults('great'),
     observationDateTime: '',
     researcherNotes: ''
   })
@@ -130,7 +130,7 @@ export default function MeasurementForm({
         const validationRules = {
           length: { min: 53, max: 82 },
           breadth: { min: 37, max: 57 }, 
-          mass: { min: 38, max: 100 }
+          mass: { min: 38, max: 115 }
         }
         
         if (measurements.length < validationRules.length.min || measurements.length > validationRules.length.max ||
@@ -308,8 +308,8 @@ export default function MeasurementForm({
             onChange={(e) => handleInputChange('speciesType', e.target.value as SpeciesType)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="arctic">Arctic Skua</option>
             <option value="great">Great Skua</option>
+            <option value="arctic">Arctic Skua</option>
           </select>
           {errors.speciesType && (
             <p className="mt-1 text-sm text-red-600">{errors.speciesType}</p>

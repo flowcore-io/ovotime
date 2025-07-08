@@ -8,17 +8,17 @@ export const VALIDATION_RULES = {
   EGG_LENGTH: { 
     min: 53, max: 82,           // mm - focused range covering both species with margin
     arctic: { min: 55, max: 62 },   // Arctic Skua specific range
-    great: { min: 70, max: 79 }     // Great Skua specific range
+    great: { min: 60.6, max: 79.8 }     // Great Skua specific range - updated from chart data
   }, 
   EGG_BREADTH: { 
     min: 37, max: 57,           // mm - focused range covering both species with margin
     arctic: { min: 39, max: 43 },   // Arctic Skua specific range
-    great: { min: 51, max: 55 }     // Great Skua specific range
+    great: { min: 45.2, max: 54.6 }     // Great Skua specific range - updated from chart data
   },
   EGG_MASS: { 
-    min: 38, max: 100,          // g - focused range covering both species with margin
+    min: 38, max: 115,          // g - focused range covering both species with margin
     arctic: { min: 42, max: 52 },   // Arctic Skua specific range
-    great: { min: 82, max: 95 }     // Great Skua specific range
+    great: { min: 75, max: 110 }     // Great Skua specific range - updated
   },
   KV_CONSTANT: { min: 0.1, max: 1.0 }, // egg-shape constant
   LATITUDE: { min: -90, max: 90 }, // degrees
