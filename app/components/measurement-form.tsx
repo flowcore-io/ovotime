@@ -5,6 +5,7 @@ import { generateId } from '@/src/lib/utils'
 import { validateEggMeasurement } from '@/src/lib/validation'
 import type { SpeciesType } from '@/src/types'
 import { useEffect, useState } from 'react'
+import MeasurementSlider from './measurement-slider'
 
 interface MeasurementFormProps {
   onSubmit?: (measurement: MeasurementFormData) => void
@@ -36,6 +37,59 @@ interface FormErrors {
   general?: string
 }
 
+// Species-specific default values (medians from actual species data)
+const getSpeciesDefaults = (speciesType: SpeciesType) => {
+  const defaults = {
+    arctic: {
+      length: 58.5,  // Middle of Arctic Skua range (55-62mm)
+      breadth: 41.0, // Middle of Arctic Skua range (39-43mm)
+      mass: 47.0,    // Middle of Arctic Skua range (42-52g) - with 0.1g accuracy
+      kv: 0.507      // Standard egg-shape constant
+    },
+    great: {
+      length: 71.1,  // Median from updated Great Skua data (60.6-79.8mm)
+      breadth: 49.5, // Median from updated Great Skua data (45.2-54.6mm)
+      mass: 92.5,    // Middle of updated Great Skua range (75-110g)
+      kv: 0.507      // Standard egg-shape constant
+    }
+  }
+  return defaults[speciesType]
+}
+
+// Species-specific typical ranges for display and validation
+const getSpeciesRanges = (speciesType: SpeciesType) => {
+  const ranges = {
+    arctic: {
+      length: { min: 55, max: 62 },    // Arctic Skua: 5.5–6.2 cm
+      breadth: { min: 39, max: 43 },   // Arctic Skua: 3.9–4.3 cm
+      mass: { min: 42, max: 52 }       // Arctic Skua: 42–52g
+    },
+    great: {
+      length: { min: 60.6, max: 79.8 },    // Great Skua: updated from chart data
+      breadth: { min: 45.2, max: 54.6 },   // Great Skua: updated from chart data (54.55 rounded)
+      mass: { min: 75, max: 110 }       // Great Skua: updated range 75-110g
+    }
+  }
+  return ranges[speciesType]
+}
+
+// Species-specific slider ranges (typical values + small margin for extreme cases)
+const getSpeciesSliderRanges = (speciesType: SpeciesType) => {
+  const ranges = {
+    arctic: {
+      length: { min: 53, max: 64 },    // Arctic: 55-62 typical + 2mm margin
+      breadth: { min: 37, max: 45 },   // Arctic: 39-43 typical + 2mm margin
+      mass: { min: 40, max: 54 }       // Arctic: 42-52 typical + 2g margin
+    },
+    great: {
+      length: { min: 59, max: 82 },    // Great: 60.6-79.8 typical + small margin
+      breadth: { min: 44, max: 56 },   // Great: 45.2-54.6 typical + small margin
+      mass: { min: 72, max: 115 }      // Great: 75-110 typical + small margin
+    }
+  }
+  return ranges[speciesType]
+}
+
 export default function MeasurementForm({ 
   onSubmit, 
   onCalculationUpdate, 
@@ -46,13 +100,8 @@ export default function MeasurementForm({
   const [formData, setFormData] = useState<MeasurementFormData>({
     measurementId: generateId(),
     sessionId,
-    speciesType: 'arctic',
-    measurements: {
-      length: 0,
-      breadth: 0,
-      mass: 0,
-      kv: 0.507
-    },
+    speciesType: 'great',
+    measurements: getSpeciesDefaults('great'),
     observationDateTime: '',
     researcherNotes: ''
   })
@@ -77,10 +126,16 @@ export default function MeasurementForm({
           return
         }
 
-        // Additional range checks before attempting calculation
-        if (measurements.length < 60 || measurements.length > 85 ||
-            measurements.breadth < 40 || measurements.breadth > 60 ||
-            measurements.mass < 70 || measurements.mass > 120) {
+        // Additional range checks before attempting calculation - use validation rules
+        const validationRules = {
+          length: { min: 53, max: 82 },
+          breadth: { min: 37, max: 57 }, 
+          mass: { min: 38, max: 115 }
+        }
+        
+        if (measurements.length < validationRules.length.min || measurements.length > validationRules.length.max ||
+            measurements.breadth < validationRules.breadth.min || measurements.breadth > validationRules.breadth.max ||
+            measurements.mass < validationRules.mass.min || measurements.mass > validationRules.mass.max) {
           setCalculation(null)
           onCalculationUpdate?.(null)
           return
@@ -127,6 +182,21 @@ export default function MeasurementForm({
 
     return () => clearTimeout(timeoutId)
   }, [formData.measurements, formData.speciesType, onCalculationUpdate, formData])
+
+  // Auto-apply species defaults when species type changes
+  useEffect(() => {
+    const newDefaults = getSpeciesDefaults(formData.speciesType)
+    setFormData(prevData => ({
+      ...prevData,
+      measurements: {
+        ...prevData.measurements,
+        length: newDefaults.length,
+        breadth: newDefaults.breadth,
+        mass: newDefaults.mass,
+        kv: newDefaults.kv
+      }
+    }))
+  }, [formData.speciesType])
 
   // Update sessionId in formData when prop changes
   useEffect(() => {
@@ -207,18 +277,20 @@ export default function MeasurementForm({
     setFormData({
       measurementId: generateId(),
       sessionId,
-      speciesType: 'arctic',
-      measurements: {
-        length: 0,
-        breadth: 0,
-        mass: 0,
-        kv: 0.507
-      },
+      speciesType: formData.speciesType,
+      measurements: getSpeciesDefaults(formData.speciesType),
       observationDateTime: '',
       researcherNotes: ''
     })
     setErrors({})
     setCalculation(null)
+  }
+
+  const resetToDefaults = () => {
+    setFormData(prev => ({
+      ...prev,
+      measurements: getSpeciesDefaults(prev.speciesType)
+    }))
   }
 
   return (
@@ -236,8 +308,8 @@ export default function MeasurementForm({
             onChange={(e) => handleInputChange('speciesType', e.target.value as SpeciesType)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="arctic">Arctic Skua</option>
             <option value="great">Great Skua</option>
+            <option value="arctic">Arctic Skua</option>
           </select>
           {errors.speciesType && (
             <p className="mt-1 text-sm text-red-600">{errors.speciesType}</p>
@@ -248,112 +320,119 @@ export default function MeasurementForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Egg Length */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Egg Length (mm) *
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              min="60"
-              max="85"
-              value={formData.measurements.length || ''}
-              onChange={(e) => handleInputChange('measurements.length', parseFloat(e.target.value) || 0)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.length ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="e.g. 72.3 (typical: 67-79)"
+            <MeasurementSlider
+              label="Egg Length"
+              value={formData.measurements.length}
+              onChange={(value) => handleInputChange('measurements.length', value)}
+              min={getSpeciesSliderRanges(formData.speciesType).length.min}
+              max={getSpeciesSliderRanges(formData.speciesType).length.max}
+              step={0.1}
+              error={errors.length}
+              unit="mm"
+              placeholder="e.g. 58.5 (Arctic) or 74.5 (Great)"
+              typicalRange={getSpeciesRanges(formData.speciesType).length}
+              helperText={`${formData.speciesType === 'arctic' ? 'Arctic' : 'Great'} Skua typical: ${getSpeciesRanges(formData.speciesType).length.min}-${getSpeciesRanges(formData.speciesType).length.max}mm`}
             />
-            {errors.length && (
-              <p className="mt-1 text-sm text-red-600">{errors.length}</p>
-            )}
           </div>
 
           {/* Egg Breadth */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Egg Breadth (mm) *
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              min="40"
-              max="60"
-              value={formData.measurements.breadth || ''}
-              onChange={(e) => handleInputChange('measurements.breadth', parseFloat(e.target.value) || 0)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.breadth ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="e.g. 50.2 (typical: 47-53)"
+            <MeasurementSlider
+              label="Egg Breadth"
+              value={formData.measurements.breadth}
+              onChange={(value) => handleInputChange('measurements.breadth', value)}
+              min={getSpeciesSliderRanges(formData.speciesType).breadth.min}
+              max={getSpeciesSliderRanges(formData.speciesType).breadth.max}
+              step={0.1}
+              error={errors.breadth}
+              unit="mm"
+              placeholder="e.g. 41.0 (Arctic) or 53.0 (Great)"
+              typicalRange={getSpeciesRanges(formData.speciesType).breadth}
+              helperText={`${formData.speciesType === 'arctic' ? 'Arctic' : 'Great'} Skua typical: ${getSpeciesRanges(formData.speciesType).breadth.min}-${getSpeciesRanges(formData.speciesType).breadth.max}mm`}
             />
-            {errors.breadth && (
-              <p className="mt-1 text-sm text-red-600">{errors.breadth}</p>
-            )}
           </div>
 
           {/* Egg Mass */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Egg Mass (g) *
-            </label>
-            <input
-              type="number"
-              step="0.001"
-              min="70"
-              max="120"
-              value={formData.measurements.mass || ''}
-              onChange={(e) => handleInputChange('measurements.mass', parseFloat(e.target.value) || 0)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.mass ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="e.g. 91.89 (typical: 80-105)"
+            <MeasurementSlider
+              label="Egg Mass"
+              value={formData.measurements.mass}
+              onChange={(value) => handleInputChange('measurements.mass', value)}
+              min={getSpeciesSliderRanges(formData.speciesType).mass.min}
+              max={getSpeciesSliderRanges(formData.speciesType).mass.max}
+              step={0.1}
+              error={errors.mass}
+              unit="g"
+              placeholder="e.g. 47.0 (Arctic) or 88.5 (Great)"
+              typicalRange={getSpeciesRanges(formData.speciesType).mass}
+              helperText={`${formData.speciesType === 'arctic' ? 'Arctic' : 'Great'} Skua typical: ${getSpeciesRanges(formData.speciesType).mass.min}-${getSpeciesRanges(formData.speciesType).mass.max}g`}
             />
-            {errors.mass && (
-              <p className="mt-1 text-sm text-red-600">{errors.mass}</p>
-            )}
           </div>
 
           {/* Kv Constant */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Kv Constant *
-            </label>
-            <input
-              type="number"
-              step="0.001"
-              min="0.1"
-              max="1.0"
-              value={formData.measurements.kv || ''}
-              onChange={(e) => handleInputChange('measurements.kv', parseFloat(e.target.value) || 0.507)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.kv ? 'border-red-300' : 'border-gray-300'
-              }`}
+            <MeasurementSlider
+              label="Kv Constant"
+              value={formData.measurements.kv}
+              onChange={(value) => handleInputChange('measurements.kv', value)}
+              min={0.1}
+              max={1.0}
+              step={0.001}
+              error={errors.kv}
+              unit=""
               placeholder="0.507"
+              helperText="Default: 0.507 (egg-shape constant from research)"
             />
-            {errors.kv && (
-              <p className="mt-1 text-sm text-red-600">{errors.kv}</p>
-            )}
-            <p className="mt-1 text-xs text-gray-500">
-              Default: 0.507 (egg-shape constant from research)
-            </p>
           </div>
         </div>
 
         {/* Measurement Guide */}
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">📏 Typical Skua Egg Measurements</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-600">
+          <h4 className="text-sm font-medium text-gray-900 mb-2">📏 {formData.speciesType === 'arctic' ? 'Arctic' : 'Great'} Skua Egg Measurements</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-600 mb-3">
             <div>
-              <span className="font-medium">Length:</span> 67-79mm
+              <span className="font-medium">Length:</span> {getSpeciesRanges(formData.speciesType).length.min}-{getSpeciesRanges(formData.speciesType).length.max}mm typical
             </div>
             <div>
-              <span className="font-medium">Breadth:</span> 47-53mm
+              <span className="font-medium">Breadth:</span> {getSpeciesRanges(formData.speciesType).breadth.min}-{getSpeciesRanges(formData.speciesType).breadth.max}mm typical
             </div>
             <div>
-              <span className="font-medium">Mass:</span> 80-105g
+              <span className="font-medium">Mass:</span> {getSpeciesRanges(formData.speciesType).mass.min}-{getSpeciesRanges(formData.speciesType).mass.max}g typical
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Values outside these ranges are accepted but may affect prediction accuracy.
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-blue-600 mb-3">
+            <div>
+              <span className="font-medium">Slider:</span> {getSpeciesSliderRanges(formData.speciesType).length.min}-{getSpeciesSliderRanges(formData.speciesType).length.max}mm
+            </div>
+            <div>
+              <span className="font-medium">Slider:</span> {getSpeciesSliderRanges(formData.speciesType).breadth.min}-{getSpeciesSliderRanges(formData.speciesType).breadth.max}mm
+            </div>
+            <div>
+              <span className="font-medium">Slider:</span> {getSpeciesSliderRanges(formData.speciesType).mass.min}-{getSpeciesSliderRanges(formData.speciesType).mass.max}g
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-gray-300">
+            <h5 className="text-xs font-medium text-blue-900 mb-2">
+              Current Defaults ({formData.speciesType === 'arctic' ? 'Arctic' : 'Great'} Skua):
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-blue-700">
+              <div>
+                <span className="font-medium">Length:</span> {getSpeciesDefaults(formData.speciesType).length}mm
+              </div>
+              <div>
+                <span className="font-medium">Breadth:</span> {getSpeciesDefaults(formData.speciesType).breadth}mm
+              </div>
+              <div>
+                <span className="font-medium">Mass:</span> {getSpeciesDefaults(formData.speciesType).mass}g
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-500 mt-3">
+            Sliders are optimized for each species. You can type values outside slider ranges if needed, but they may trigger validation warnings.
           </p>
         </div>
 
@@ -459,10 +538,19 @@ export default function MeasurementForm({
           
           <button
             type="button"
-            onClick={resetForm}
-            className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+            onClick={resetToDefaults}
+            className="sm:flex-initial bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-colors whitespace-nowrap"
+            title="Reset measurements to species defaults"
           >
-            Reset Form
+            Use Defaults
+          </button>
+
+          <button
+            type="button"
+            onClick={resetForm}
+            className="sm:flex-initial bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors whitespace-nowrap"
+          >
+            Reset All
           </button>
         </div>
 
